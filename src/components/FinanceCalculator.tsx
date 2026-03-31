@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
-import { Calculator, DollarSign, Calendar, Percent } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { motion } from "motion/react";
+import { Calculator, DollarSign, Calendar, Percent } from "lucide-react";
 
 interface FinanceCalculatorProps {
   price?: number;
 }
 
-export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({ price = 100000 }) => {
+export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({
+  price = 100000,
+}) => {
   const [downPayment, setDownPayment] = useState(price * 0.2);
   const [interestRate, setInterestRate] = useState(5.5);
   const [term, setTerm] = useState(60);
@@ -33,8 +35,12 @@ export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({ price = 10
           <Calculator className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-xl font-black tracking-tighter uppercase leading-none">Finance Calculator</h3>
-          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">Estimate your monthly payments</p>
+          <h3 className="text-xl font-black tracking-tighter uppercase leading-none">
+            Finance Calculator
+          </h3>
+          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">
+            Estimate your monthly payments
+          </p>
         </div>
       </div>
 
@@ -43,22 +49,26 @@ export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({ price = 10
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-[10px] uppercase tracking-widest font-bold text-muted">
               <label>Vehicle Price</label>
-              <span className="text-ink font-mono">${price.toLocaleString()}</span>
+              <span className="text-ink font-mono">
+                ${price.toLocaleString()}
+              </span>
             </div>
             <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-              <div className="h-full bg-accent" style={{ width: '100%' }} />
+              <div className="h-full bg-accent" style={{ width: "100%" }} />
             </div>
           </div>
 
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-[10px] uppercase tracking-widest font-bold text-muted">
               <label>Down Payment</label>
-              <span className="text-ink font-mono">${downPayment.toLocaleString()}</span>
+              <span className="text-ink font-mono">
+                ${downPayment.toLocaleString()}
+              </span>
             </div>
-            <input 
-              type="range" 
-              min="0" 
-              max={price} 
+            <input
+              type="range"
+              min="0"
+              max={price}
               step="1000"
               value={downPayment}
               onChange={(e) => setDownPayment(parseInt(e.target.value))}
@@ -71,10 +81,10 @@ export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({ price = 10
               <label>Interest Rate (%)</label>
               <span className="text-ink font-mono">{interestRate}%</span>
             </div>
-            <input 
-              type="range" 
-              min="0.1" 
-              max="15" 
+            <input
+              type="range"
+              min="0.1"
+              max="15"
               step="0.1"
               value={interestRate}
               onChange={(e) => setInterestRate(parseFloat(e.target.value))}
@@ -92,7 +102,7 @@ export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({ price = 10
                 <button
                   key={t}
                   onClick={() => setTerm(t)}
-                  className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-sm border transition-all ${term === t ? 'bg-accent border-accent text-bg' : 'border-line text-muted hover:text-ink'}`}
+                  className={`flex-1 py-2 text-[10px] font-bold uppercase tracking-widest rounded-sm border transition-all ${term === t ? "bg-accent border-accent text-bg" : "border-line text-muted hover:text-ink"}`}
                 >
                   {t}
                 </button>
@@ -101,15 +111,17 @@ export const FinanceCalculator: React.FC<FinanceCalculatorProps> = ({ price = 10
           </div>
         </div>
 
-        <div className="flex flex-col justify-center items-center bg-white/5 p-8 rounded-sm border border-white/10 relative overflow-hidden">
+        <div className="min-w-0 flex flex-col justify-center items-center bg-white/5 p-8 rounded-sm border border-white/10 relative overflow-hidden min-h-[260px]">
           <div className="absolute top-0 right-0 p-4 opacity-5">
             <DollarSign className="w-32 h-32" />
           </div>
-          <div className="text-[10px] uppercase tracking-widest font-bold text-muted mb-2">Estimated Monthly Payment</div>
-          <div className="text-5xl font-black tracking-tighter text-accent font-mono">
+          <div className="text-[10px] uppercase tracking-widest font-bold text-muted mb-2 text-center">
+            Estimated Monthly Payment
+          </div>
+          <div className="w-full max-w-full text-3xl sm:text-4xl md:text-4xl lg:text-4xl font-black leading-tight tracking-tighter text-accent font-mono text-center">
             ${Math.round(monthlyPayment).toLocaleString()}
           </div>
-          <div className="text-[10px] uppercase tracking-widest font-bold text-muted mt-4 text-center max-w-[200px]">
+          <div className="text-[10px] uppercase tracking-widest font-bold text-muted mt-4 text-center max-w-[220px]">
             *Estimated payments are for informational purposes only.
           </div>
           <button className="mt-8 w-full py-4 bg-white text-bg font-bold uppercase tracking-widest text-xs rounded-sm hover:scale-105 transition-all">

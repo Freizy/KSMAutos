@@ -1,20 +1,35 @@
-import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, User, signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
-import { collection, query, onSnapshot, doc, setDoc, getDoc, addDoc } from 'firebase/firestore';
-import { auth, db, OperationType, handleFirestoreError } from './firebase';
-import { Vehicle, UserProfile } from './types';
-import { INITIAL_INVENTORY } from './constants';
-import { cn } from './lib/utils';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Gauge, 
-  Car, 
-  User as UserIcon, 
-  LogOut, 
-  LogIn, 
-  ChevronRight, 
-  Activity, 
-  Zap, 
+import React, { useState, useEffect } from "react";
+import {
+  onAuthStateChanged,
+  User,
+  signInWithPopup,
+  signInWithRedirect,
+  GoogleAuthProvider,
+  signOut,
+} from "firebase/auth";
+import {
+  collection,
+  query,
+  onSnapshot,
+  doc,
+  setDoc,
+  getDoc,
+  addDoc,
+} from "firebase/firestore";
+import { auth, db, OperationType, handleFirestoreError } from "./firebase";
+import { Vehicle, UserProfile } from "./types";
+import { INITIAL_INVENTORY } from "./constants";
+import { cn } from "./lib/utils";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Gauge,
+  Car,
+  User as UserIcon,
+  LogOut,
+  LogIn,
+  ChevronRight,
+  Activity,
+  Zap,
   ShieldCheck,
   TrendingUp,
   LayoutGrid,
@@ -23,23 +38,26 @@ import {
   Plus,
   ShieldAlert,
   Calculator,
-  ArrowRight
-} from 'lucide-react';
+  ArrowRight,
+} from "lucide-react";
 
 // Components
-import Inventory from './components/Inventory';
-import Garage from './components/Garage';
-import Profile from './components/Profile';
-import { AdminDashboard } from './components/AdminDashboard';
-import Hero from './components/Hero';
-import { FinanceCalculator } from './components/FinanceCalculator';
-import { VehicleCompare } from './components/VehicleCompare';
+import Inventory from "./components/Inventory";
+import Garage from "./components/Garage";
+import Profile from "./components/Profile";
+import { AdminDashboard } from "./components/AdminDashboard";
+import Hero from "./components/Hero";
+import { FinanceCalculator } from "./components/FinanceCalculator";
+import { VehicleCompare } from "./components/VehicleCompare";
+import About from "./components/About";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [inventory, setInventory] = useState<Vehicle[]>([]);
-  const [activeTab, setActiveTab] = useState<'showroom' | 'garage' | 'profile' | 'admin'>('showroom');
+  const [activeTab, setActiveTab] = useState<
+    "showroom" | "garage" | "profile" | "admin" | "about"
+  >("showroom");
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
@@ -48,16 +66,16 @@ export default function App() {
   const showroomRef = React.useRef<HTMLDivElement>(null);
 
   const scrollToShowroom = () => {
-    showroomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    showroomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleCompare = (vehicle: Vehicle) => {
-    setComparingIds(prev => {
+    setComparingIds((prev) => {
       if (prev.includes(vehicle.id)) {
-        return prev.filter(id => id !== vehicle.id);
+        return prev.filter((id) => id !== vehicle.id);
       }
       if (prev.length >= 3) {
-        alert('You can compare up to 3 vehicles at a time.');
+        alert("You can compare up to 3 vehicles at a time.");
         return prev;
       }
       return [...prev, vehicle.id];
@@ -70,16 +88,16 @@ export default function App() {
       setUser(firebaseUser);
       if (firebaseUser) {
         // Fetch or create user profile
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDocRef = doc(db, "users", firebaseUser.uid);
         try {
           const userDoc = await getDoc(userDocRef);
           if (!userDoc.exists()) {
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
               displayName: firebaseUser.displayName,
-              email: firebaseUser.email || '',
+              email: firebaseUser.email || "",
               photoUrl: firebaseUser.photoURL,
-              role: 'user',
+              role: "user",
               createdAt: new Date().toISOString(),
             };
             await setDoc(userDocRef, newProfile);
@@ -88,7 +106,11 @@ export default function App() {
             setProfile(userDoc.data() as UserProfile);
           }
         } catch (error) {
-          handleFirestoreError(error, OperationType.GET, `users/${firebaseUser.uid}`);
+          handleFirestoreError(
+            error,
+            OperationType.GET,
+            `users/${firebaseUser.uid}`,
+          );
         }
       } else {
         setProfile(null);
@@ -102,25 +124,31 @@ export default function App() {
   useEffect(() => {
     if (!isAuthReady) return;
 
-    const q = query(collection(db, 'inventory'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle));
-      if (items.length === 0 && user) {
-        // Seed initial inventory if empty (for demo purposes, only if admin or first run)
-        // In a real app, this would be done via an admin panel or script
-        console.log('Inventory empty, seeding initial data...');
-        INITIAL_INVENTORY.forEach(async (v) => {
-          try {
-            await setDoc(doc(db, 'inventory', v.id), v);
-          } catch (e) {
-            console.error('Failed to seed inventory:', e);
-          }
-        });
-      }
-      setInventory(items);
-    }, (error) => {
-      handleFirestoreError(error, OperationType.LIST, 'inventory');
-    });
+    const q = query(collection(db, "inventory"));
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const items = snapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() }) as Vehicle,
+        );
+        if (items.length === 0 && user) {
+          // Seed initial inventory if empty (for demo purposes, only if admin or first run)
+          // In a real app, this would be done via an admin panel or script
+          console.log("Inventory empty, seeding initial data...");
+          INITIAL_INVENTORY.forEach(async (v) => {
+            try {
+              await setDoc(doc(db, "inventory", v.id), v);
+            } catch (e) {
+              console.error("Failed to seed inventory:", e);
+            }
+          });
+        }
+        setInventory(items);
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, "inventory");
+      },
+    );
 
     return () => unsubscribe();
   }, [isAuthReady, user]);
@@ -131,29 +159,50 @@ export default function App() {
       await signInWithPopup(auth, provider);
       setShowAuthModal(false);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
+      const err = error as { code?: string; message?: string };
+      if (
+        err.code === "auth/popup-blocked" ||
+        err.code === "auth/popup-closed-by-user" ||
+        err.code === "auth/cancelled-popup-request"
+      ) {
+        try {
+          await signInWithRedirect(auth, provider);
+        } catch (redirectError) {
+          console.error("Redirect login failed:", redirectError);
+          alert(
+            "Unable to open login popup. Please allow pop-ups or try again later."
+          );
+        }
+      } else {
+        alert(
+          "Login failed. Please refresh the page and try again, or allow pop-ups in your browser."
+        );
+      }
     }
   };
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setActiveTab('showroom');
+      setActiveTab("showroom");
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
   if (!isAuthReady) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           className="flex flex-col items-center gap-4"
         >
           <Gauge className="w-12 h-12 text-accent animate-pulse" />
-          <p className="font-mono text-xs tracking-widest uppercase opacity-50">Initializing KSM Systems...</p>
+          <p className="font-mono text-xs tracking-widest uppercase opacity-50">
+            Initializing KSM Systems...
+          </p>
         </motion.div>
       </div>
     );
@@ -165,33 +214,43 @@ export default function App() {
       <nav className="fixed top-0 left-0 right-0 z-50 border-b border-line bg-bg/80 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <div 
-              className="flex items-center gap-2 cursor-pointer group" 
-              onClick={() => setActiveTab('showroom')}
+            <div
+              className="flex items-center gap-2 cursor-pointer group"
+              onClick={() => setActiveTab("showroom")}
             >
               <div className="w-8 h-8 bg-accent flex items-center justify-center rounded-sm transform group-hover:rotate-12 transition-transform">
                 <Gauge className="w-5 h-5 text-bg" />
               </div>
-              <span className="font-bold tracking-tighter text-xl uppercase">KSM Autos</span>
+              <span className="font-bold tracking-tighter text-xl uppercase">
+                KSM Autos
+              </span>
             </div>
 
             <div className="hidden md:flex items-center gap-1">
-              <NavButton 
-                active={activeTab === 'showroom'} 
-                onClick={() => setActiveTab('showroom')}
+              <NavButton
+                active={activeTab === "showroom"}
+                onClick={() => setActiveTab("showroom")}
                 icon={<LayoutGrid className="w-4 h-4" />}
                 label="Showroom"
               />
-              <NavButton 
-                active={activeTab === 'garage'} 
-                onClick={() => user ? setActiveTab('garage') : setShowAuthModal(true)}
+              <NavButton
+                active={activeTab === "garage"}
+                onClick={() =>
+                  user ? setActiveTab("garage") : setShowAuthModal(true)
+                }
                 icon={<Car className="w-4 h-4" />}
                 label="My Garage"
               />
-              {profile?.role === 'admin' && (
-                <NavButton 
-                  active={activeTab === 'admin'} 
-                  onClick={() => setActiveTab('admin')}
+              <NavButton
+                active={activeTab === "about"}
+                onClick={() => setActiveTab("about")}
+                icon={<ShieldCheck className="w-4 h-4" />}
+                label="About"
+              />
+              {profile?.role === "admin" && (
+                <NavButton
+                  active={activeTab === "admin"}
+                  onClick={() => setActiveTab("admin")}
                   icon={<ShieldAlert className="w-4 h-4" />}
                   label="Admin"
                 />
@@ -202,21 +261,28 @@ export default function App() {
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => setActiveTab('profile')}
+                <button
+                  onClick={() => setActiveTab("profile")}
                   className={cn(
                     "flex items-center gap-2 px-3 py-1.5 rounded-full border border-line hover:bg-white/5 transition-colors",
-                    activeTab === 'profile' && "bg-white/10 border-accent/50"
+                    activeTab === "profile" && "bg-white/10 border-accent/50",
                   )}
                 >
                   {user.photoURL ? (
-                    <img src={user.photoURL} alt="" className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+                    <img
+                      src={user.photoURL}
+                      alt=""
+                      className="w-6 h-6 rounded-full"
+                      referrerPolicy="no-referrer"
+                    />
                   ) : (
                     <UserIcon className="w-4 h-4" />
                   )}
-                  <span className="text-xs font-medium hidden sm:inline">{user.displayName}</span>
+                  <span className="text-xs font-medium hidden sm:inline">
+                    {user.displayName}
+                  </span>
                 </button>
-                <button 
+                <button
                   onClick={handleLogout}
                   className="p-2 text-muted hover:text-ink transition-colors"
                   title="Sign Out"
@@ -225,7 +291,7 @@ export default function App() {
                 </button>
               </div>
             ) : (
-              <button 
+              <button
                 onClick={() => setShowAuthModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-accent text-bg font-bold text-xs uppercase tracking-widest rounded-sm hover:scale-105 active:scale-95 transition-all"
               >
@@ -240,7 +306,7 @@ export default function App() {
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
         <AnimatePresence mode="wait">
-          {activeTab === 'showroom' && (
+          {activeTab === "showroom" && (
             <motion.div
               key="showroom"
               initial={{ opacity: 0, y: 20 }}
@@ -249,43 +315,72 @@ export default function App() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
               <Hero onExplore={scrollToShowroom} />
-              
+
+              <HowItWorks />
+
               {/* Featured Section */}
-              <div ref={showroomRef} className="max-w-7xl mx-auto px-4 py-24 border-b border-line">
+              <div
+                ref={showroomRef}
+                className="max-w-7xl mx-auto px-4 py-24 border-b border-line"
+              >
                 <div className="flex justify-between items-end mb-12">
                   <div>
-                    <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">Featured Selection</h2>
-                    <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-4">Hand-picked premium inventory</p>
+                    <h2 className="text-5xl font-black tracking-tighter uppercase leading-none">
+                      Featured Selection
+                    </h2>
+                    <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-4">
+                      Hand-picked premium inventory
+                    </p>
                   </div>
                   <div className="hidden md:flex items-center gap-4 text-[10px] uppercase tracking-widest font-bold text-accent">
                     <span>Scroll to explore</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {inventory.filter(v => v.isFeatured).slice(0, 2).map(v => (
-                    <div key={v.id} className="relative aspect-[16/9] overflow-hidden group cursor-pointer" onClick={() => { setSelectedVehicle(v); setShowInquiryModal(true); }}>
-                      <img src={v.imageUrl} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent" />
-                      <div className="absolute bottom-8 left-8">
-                        <div className="text-[10px] text-accent uppercase tracking-widest font-bold mb-1">{v.year} {v.make}</div>
-                        <h3 className="text-4xl font-black tracking-tighter uppercase leading-none">{v.model}</h3>
-                        <div className="mt-4 flex items-center gap-4">
-                          <span className="text-xl font-mono font-bold">${v.price?.toLocaleString()}</span>
-                          <div className="h-0.5 w-12 bg-accent" />
+                  {inventory
+                    .filter((v) => v.isFeatured)
+                    .slice(0, 2)
+                    .map((v) => (
+                      <div
+                        key={v.id}
+                        className="relative aspect-[16/9] overflow-hidden group cursor-pointer"
+                        onClick={() => {
+                          setSelectedVehicle(v);
+                          setShowInquiryModal(true);
+                        }}
+                      >
+                        <img
+                          src={v.imageUrl}
+                          alt=""
+                          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent" />
+                        <div className="absolute bottom-8 left-8">
+                          <div className="text-[10px] text-accent uppercase tracking-widest font-bold mb-1">
+                            {v.year} {v.make}
+                          </div>
+                          <h3 className="text-4xl font-black tracking-tighter uppercase leading-none">
+                            {v.model}
+                          </h3>
+                          <div className="mt-4 flex items-center gap-4">
+                            <span className="text-xl font-mono font-bold">
+                              ${v.price?.toLocaleString()}
+                            </span>
+                            <div className="h-0.5 w-12 bg-accent" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
 
               <div className="max-w-7xl mx-auto px-4 py-12">
                 <div className="flex flex-col lg:flex-row gap-12">
                   <div className="flex-1">
-                    <Inventory 
-                      vehicles={inventory} 
+                    <Inventory
+                      vehicles={inventory}
                       onInquire={(v) => {
                         setSelectedVehicle(v);
                         setShowInquiryModal(true);
@@ -294,27 +389,40 @@ export default function App() {
                       comparingIds={comparingIds}
                     />
                   </div>
-                  
+
                   <div className="lg:w-96 flex flex-col gap-8">
-                    <FinanceCalculator price={selectedVehicle?.price || inventory[0]?.price} />
-                    
+                    <FinanceCalculator
+                      price={selectedVehicle?.price || inventory[0]?.price}
+                    />
+
                     <div className="glass p-8 flex flex-col gap-4">
-                      <h4 className="text-xs font-bold uppercase tracking-widest text-accent">Why KSM Autos?</h4>
+                      <h4 className="text-xs font-bold uppercase tracking-widest text-accent">
+                        Why KSM Autos?
+                      </h4>
                       <div className="flex flex-col gap-4">
-                        <FeatureItem title="Certified Quality" desc="Every vehicle undergoes a 200-point inspection." />
-                        <FeatureItem title="Global Delivery" desc="Secure worldwide shipping for all acquisitions." />
-                        <FeatureItem title="Bespoke Finance" desc="Tailored financial solutions for elite clients." />
+                        <FeatureItem
+                          title="Certified Quality"
+                          desc="Every vehicle undergoes a 200-point inspection."
+                        />
+                        <FeatureItem
+                          title="Global Delivery"
+                          desc="Secure worldwide shipping for all acquisitions."
+                        />
+                        <FeatureItem
+                          title="Bespoke Finance"
+                          desc="Tailored financial solutions for elite clients."
+                        />
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              
+
               <VehicleCompare vehicles={inventory} />
             </motion.div>
           )}
 
-          {activeTab === 'garage' && user && (
+          {activeTab === "garage" && user && (
             <motion.div
               key="garage"
               initial={{ opacity: 0, x: 20 }}
@@ -327,7 +435,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {activeTab === 'profile' && user && profile && (
+          {activeTab === "profile" && user && profile && (
             <motion.div
               key="profile"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -340,7 +448,20 @@ export default function App() {
             </motion.div>
           )}
 
-          {activeTab === 'admin' && user && profile?.role === 'admin' && (
+          {activeTab === "about" && (
+            <motion.div
+              key="about"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+              className="max-w-7xl mx-auto px-4 py-12"
+            >
+              <About />
+            </motion.div>
+          )}
+
+          {activeTab === "admin" && user && profile?.role === "admin" && (
             <motion.div
               key="admin"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -359,14 +480,14 @@ export default function App() {
       <AnimatePresence>
         {showAuthModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowAuthModal(false)}
               className="absolute inset-0 bg-bg/90 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -376,17 +497,28 @@ export default function App() {
                 <ShieldCheck className="w-8 h-8 text-accent" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold tracking-tighter uppercase mb-2">Secure Access</h2>
-                <p className="text-muted text-sm">Join KSM Autos to manage your high-performance collection and access exclusive inventory.</p>
+                <h2 className="text-2xl font-bold tracking-tighter uppercase mb-2">
+                  Secure Access
+                </h2>
+                <p className="text-muted text-sm">
+                  Join KSM Autos to manage your high-performance collection and
+                  access exclusive inventory.
+                </p>
               </div>
-              <button 
+              <button
                 onClick={handleLogin}
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white text-bg font-bold rounded-sm hover:bg-accent hover:text-bg transition-all"
               >
-                <img src="https://www.google.com/favicon.ico" alt="" className="w-5 h-5" />
+                <img
+                  src="https://www.google.com/favicon.ico"
+                  alt=""
+                  className="w-5 h-5"
+                />
                 Continue with Google
               </button>
-              <p className="text-[10px] uppercase tracking-widest opacity-30">Encrypted via Firebase Authentication</p>
+              <p className="text-[10px] uppercase tracking-widest opacity-30">
+                Encrypted via Firebase Authentication
+              </p>
             </motion.div>
           </div>
         )}
@@ -396,14 +528,14 @@ export default function App() {
       <AnimatePresence>
         {showInquiryModal && selectedVehicle && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowInquiryModal(false)}
               className="absolute inset-0 bg-bg/90 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -411,53 +543,105 @@ export default function App() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tighter uppercase leading-none">Inquiry</h2>
-                  <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">Ref: {selectedVehicle.id.slice(0, 8)}</p>
+                  <h2 className="text-2xl font-bold tracking-tighter uppercase leading-none">
+                    Inquiry
+                  </h2>
+                  <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">
+                    Ref: {selectedVehicle.id.slice(0, 8)}
+                  </p>
                 </div>
-                <button onClick={() => setShowInquiryModal(false)} className="text-muted hover:text-ink">×</button>
+                <button
+                  onClick={() => setShowInquiryModal(false)}
+                  className="text-muted hover:text-ink"
+                >
+                  ×
+                </button>
               </div>
 
               <div className="flex items-center gap-4 p-4 bg-white/5 rounded-sm border border-line">
-                <img src={selectedVehicle.imageUrl} alt="" className="w-16 h-16 object-cover rounded-sm" />
+                <img
+                  src={selectedVehicle.imageUrl}
+                  alt=""
+                  className="w-16 h-16 object-cover rounded-sm"
+                />
                 <div>
-                  <div className="text-[10px] text-muted uppercase tracking-widest font-bold">{selectedVehicle.year} {selectedVehicle.make}</div>
-                  <div className="text-lg font-black tracking-tighter uppercase leading-none">{selectedVehicle.model}</div>
-                  <div className="text-accent font-mono text-sm font-bold tracking-tighter mt-1">${selectedVehicle.price?.toLocaleString()}</div>
+                  <div className="text-[10px] text-muted uppercase tracking-widest font-bold">
+                    {selectedVehicle.year} {selectedVehicle.make}
+                  </div>
+                  <div className="text-lg font-black tracking-tighter uppercase leading-none">
+                    {selectedVehicle.model}
+                  </div>
+                  <div className="text-accent font-mono text-sm font-bold tracking-tighter mt-1">
+                    ${selectedVehicle.price?.toLocaleString()}
+                  </div>
                 </div>
               </div>
 
-              <form className="flex flex-col gap-4" onSubmit={async (e) => {
-                e.preventDefault();
-                const formData = new FormData(e.currentTarget);
-                try {
-                  await addDoc(collection(db, 'inquiries'), {
-                    vehicleId: selectedVehicle.id,
-                    vehicleName: `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`,
-                    userName: formData.get('name'),
-                    userEmail: formData.get('email'),
-                    message: formData.get('message'),
-                    status: 'pending',
-                    createdAt: new Date().toISOString()
-                  });
-                  alert('Inquiry sent successfully. Our team will contact you shortly.');
-                  setShowInquiryModal(false);
-                } catch (err) {
-                  handleFirestoreError(err, OperationType.CREATE, 'inquiries');
-                }
-              }}>
+              <form
+                className="flex flex-col gap-4"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const formData = new FormData(e.currentTarget);
+                  try {
+                    await addDoc(collection(db, "inquiries"), {
+                      vehicleId: selectedVehicle.id,
+                      vehicleName: `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`,
+                      userName: formData.get("name"),
+                      userEmail: formData.get("email"),
+                      message: formData.get("message"),
+                      status: "pending",
+                      createdAt: new Date().toISOString(),
+                    });
+                    alert(
+                      "Inquiry sent successfully. Our team will contact you shortly.",
+                    );
+                    setShowInquiryModal(false);
+                  } catch (err) {
+                    handleFirestoreError(
+                      err,
+                      OperationType.CREATE,
+                      "inquiries",
+                    );
+                  }
+                }}
+              >
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Full Name</label>
-                  <input name="name" required className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none" placeholder="Enter your name" />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+                    Full Name
+                  </label>
+                  <input
+                    name="name"
+                    required
+                    className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none"
+                    placeholder="Enter your name"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Email Address</label>
-                  <input name="email" type="email" required className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none" placeholder="Enter your email" />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+                    Email Address
+                  </label>
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none"
+                    placeholder="Enter your email"
+                  />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Message (Optional)</label>
-                  <textarea name="message" className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none h-24 resize-none" placeholder="Any specific questions?" />
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+                    Message (Optional)
+                  </label>
+                  <textarea
+                    name="message"
+                    className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none h-24 resize-none"
+                    placeholder="Any specific questions?"
+                  />
                 </div>
-                <button type="submit" className="w-full py-4 bg-accent text-bg font-bold uppercase tracking-widest rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all mt-2">
+                <button
+                  type="submit"
+                  className="w-full py-4 bg-accent text-bg font-bold uppercase tracking-widest rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all mt-2"
+                >
                   Send Inquiry
                 </button>
               </form>
@@ -472,15 +656,27 @@ export default function App() {
           <div className="flex flex-col items-center md:items-start gap-2">
             <div className="flex items-center gap-2">
               <Gauge className="w-5 h-5 text-accent" />
-              <span className="font-bold tracking-tighter uppercase">KSM Autos</span>
+              <span className="font-bold tracking-tighter uppercase">
+                KSM Autos
+              </span>
             </div>
-            <p className="text-xs text-muted">High-Performance Vehicle Management System</p>
+            <p className="text-xs text-muted">
+              High-Performance Vehicle Management System
+            </p>
           </div>
           <div className="flex gap-8 text-[10px] uppercase tracking-widest font-medium text-muted">
-            <a href="#" className="hover:text-accent transition-colors">Terms</a>
-            <a href="#" className="hover:text-accent transition-colors">Privacy</a>
-            <a href="#" className="hover:text-accent transition-colors">API</a>
-            <a href="#" className="hover:text-accent transition-colors">Support</a>
+            <a href="#" className="hover:text-accent transition-colors">
+              Terms
+            </a>
+            <a href="#" className="hover:text-accent transition-colors">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-accent transition-colors">
+              API
+            </a>
+            <a href="#" className="hover:text-accent transition-colors">
+              Support
+            </a>
           </div>
           <div className="font-mono text-[10px] opacity-30">
             © 2026 KSM_AUTOS_SYSTEMS.V4
@@ -491,28 +687,92 @@ export default function App() {
   );
 }
 
-function FeatureItem({ title, desc }: { title: string, desc: string }) {
+function FeatureItem({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <div className="text-[10px] font-black uppercase tracking-widest text-ink">{title}</div>
+      <div className="text-[10px] font-black uppercase tracking-widest text-ink">
+        {title}
+      </div>
       <p className="text-[10px] text-muted leading-relaxed">{desc}</p>
     </div>
   );
 }
 
-function NavButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+function HowItWorks() {
   return (
-    <button 
+    <section className="max-w-7xl mx-auto px-4 py-16">
+      <div className="flex flex-col gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-accent">
+              How it works
+            </p>
+            <h2 className="mt-4 text-4xl font-black tracking-tighter uppercase leading-tight">
+              Find, compare, and finance the perfect performance car.
+            </h2>
+          </div>
+          <div className="text-sm text-muted max-w-xl">
+            Browse elite inventory, compare the best offers side-by-side, and secure premium financing with a transparent buying experience.
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-3">
+          <ServiceCard
+            icon={<ShieldCheck className="w-5 h-5" />}
+            title="Curated inventory"
+            description="Hand-picked hypercars, customs, and vintage icons from trusted sources."
+          />
+          <ServiceCard
+            icon={<TrendingUp className="w-5 h-5" />}
+            title="Instant comparisons"
+            description="See performance, pricing, and ownership value side-by-side in seconds."
+          />
+          <ServiceCard
+            icon={<Calculator className="w-5 h-5" />}
+            title="Flexible finance"
+            description="Estimate payments and tailor terms for every premium acquisition."
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ServiceCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="glass p-6 rounded-sm border border-white/10 hover:border-accent/30 transition-all">
+      <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent/10 text-accent mb-5">
+        {icon}
+      </div>
+      <h3 className="text-xl font-black uppercase tracking-tighter mb-3">{title}</h3>
+      <p className="text-sm leading-relaxed text-muted">{description}</p>
+    </div>
+  );
+}
+
+function NavButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
       onClick={onClick}
       className={cn(
         "flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all relative",
-        active ? "text-accent" : "text-muted hover:text-ink"
+        active ? "text-accent" : "text-muted hover:text-ink",
       )}
     >
       {icon}
       {label}
       {active && (
-        <motion.div 
+        <motion.div
           layoutId="nav-underline"
           className="absolute bottom-0 left-4 right-4 h-0.5 bg-accent"
         />
