@@ -1,0 +1,159 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: inventory
+    // Document ID: auto-generated
+    // Fields:
+    //   - make: string (required)
+    //   - model: string (required)
+    //   - year: number (required)
+    //   - price: number
+    //   - topSpeed: number
+    //   - acceleration: number
+    //   - horsepower: number
+    //   - transmission: string
+    //   - engine: string
+    //   - torque: string
+    //   - weight: string
+    //   - downforce: string
+    //   - fuelDelivery: string
+    //   - imageUrl: string (required)
+    //   - category: string (enum)
+    //   - status: string (enum)
+    //
+    // Collection: users
+    // Document ID: userId (UID)
+    // Fields:
+    //   - uid: string (required)
+    //   - displayName: string
+    //   - email: string (required, email format)
+    //   - photoUrl: string
+    //   - role: string (enum)
+    //   - createdAt: timestamp
+    //
+    // Subcollection: users/{userId}/garage
+    // Document ID: auto-generated
+    // Fields:
+    //   - make: string (required)
+    //   - model: string (required)
+    //   - year: number (required)
+    //   - vin: string
+    //   - mileage: number
+    //   - imageUrl: string (required)
+    //   - ownerUid: string (required, must match parent userId)
+    //
+    // ===============================================================
+
+    // Collection: inquiries
+    // Document ID: auto-generated
+    // Fields:
+    //   - vehicleId: string (required)
+    //   - vehicleName: string
+    //   - userName: string (required)
+    //   - userEmail: string (required, email format)
+    //   - message: string (required)
+    //   - status: string (enum: pending, contacted, closed)
+    //   - createdAt: timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "samenso100@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUrl(url) {
+      return url is string && (url.matches("^https://.*") || url.matches("^http://.*"));
+    }
+
+    function hasOnlyAllowedFields(data, allowedFields) {
+      return data.keys().hasOnly(allowedFields);
+    }
+
+    function hasRequiredFields(data, requiredFields) {
+      return data.keys().hasAll(requiredFields);
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return hasRequiredFields(data, ['uid', 'email']) &&
+             hasOnlyAllowedFields(data, ['uid', 'displayName', 'email', 'photoUrl', 'role', 'createdAt']) &&
+             data.uid is string &&
+             data.email is string && isValidEmail(data.email) &&
+             (data.role == 'user' || data.role == 'elite' || data.role == 'admin');
+    }
+
+    function isValidVehicle(data) {
+      return hasRequiredFields(data, ['make', 'model', 'year', 'imageUrl']) &&
+             data.make is string && data.make.size() < 100 &&
+             data.model is string && data.model.size() < 100 &&
+             data.year is int && data.year > 1885 && data.year < 2100 &&
+             isValidUrl(data.imageUrl);
+    }
+
+    function isValidInquiry(data) {
+      return hasRequiredFields(data, ['vehicleId', 'userName', 'userEmail', 'message']) &&
+             data.vehicleId is string &&
+             data.userName is string && data.userName.size() > 0 && data.userName.size() < 100 &&
+             data.userEmail is string && isValidEmail(data.userEmail) &&
+             data.message is string && data.message.size() > 0 && data.message.size() < 2000;
+    }
+
+    // ===============================================================
+    // Match Rules
+    // ===============================================================
+
+    // Inventory is publicly readable, but writable only by admins
+    match /inventory/{vehicleId} {
+      allow read: if true; // Publicly readable for a sales site
+      allow create, update, delete: if isAdmin() && isValidVehicle(request.resource.data);
+    }
+
+    // Inquiries
+    match /inquiries/{inquiryId} {
+      allow read: if isAdmin();
+      allow create: if isValidInquiry(request.resource.data);
+      allow update, delete: if isAdmin();
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated(); // Allow reading profiles for community features
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == 'user';
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
+      allow delete: if isAdmin();
+
+      // User's private garage
+      match /garage/{vehicleId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) && isValidVehicle(request.resource.data) && request.resource.data.ownerUid == userId;
+        allow update: if isOwner(userId) && isValidVehicle(request.resource.data) && request.resource.data.ownerUid == userId;
+        allow delete: if isOwner(userId) || isAdmin();
+      }
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "Vehicle": {
+      "title": "Vehicle",
+      "description": "A high-performance vehicle in the inventory or garage.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the vehicle." },
+        "make": { "type": "string", "description": "Manufacturer of the vehicle." },
+        "model": { "type": "string", "description": "Model name of the vehicle." },
+        "year": { "type": "integer", "description": "Manufacturing year." },
+        "price": { "type": "number", "description": "Price of the vehicle." },
+        "topSpeed": { "type": "number", "description": "Top speed in km/h." },
+        "acceleration": { "type": "number", "description": "0-100 km/h time in seconds." },
+        "horsepower": { "type": "number", "description": "Peak power in BHP." },
+        "transmission": { "type": "string", "description": "Transmission type (e.g., DCT 8-SPD)." },
+        "engine": { "type": "string", "description": "Engine architecture (e.g., 4.0L V8)." },
+        "torque": { "type": "string", "description": "Max torque specification." },
+        "weight": { "type": "string", "description": "Curb weight." },
+        "downforce": { "type": "string", "description": "Downforce at specific speed." },
+        "fuelDelivery": { "type": "string", "description": "Fuel delivery system." },
+        "imageUrl": { "type": "string", "description": "URL to the vehicle image." },
+        "category": { "type": "string", "enum": ["Hypercars", "Customs", "Vintage", "Prototype"], "description": "Vehicle category." },
+        "status": { "type": "string", "enum": ["available", "sold", "pre-order"], "description": "Inventory status." },
+        "vin": { "type": "string", "description": "Vehicle Identification Number." },
+        "mileage": { "type": "number", "description": "Current mileage." },
+        "ownerUid": { "type": "string", "description": "UID of the owner (if in garage)." },
+        "isFeatured": { "type": "boolean", "description": "Whether the vehicle is featured on the home page." },
+        "description": { "type": "string", "description": "Detailed description of the vehicle." },
+        "features": { "type": "array", "items": { "type": "string" }, "description": "List of key features." },
+        "exteriorColor": { "type": "string", "description": "Exterior color." },
+        "interiorColor": { "type": "string", "description": "Interior color." }
+      },
+      "required": ["make", "model", "year", "imageUrl"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Information about a KSM Autos member.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID." },
+        "displayName": { "type": "string", "description": "User's display name." },
+        "email": { "type": "string", "format": "email", "description": "User's email address." },
+        "photoUrl": { "type": "string", "description": "User's profile picture URL." },
+        "role": { "type": "string", "enum": ["user", "admin", "elite"], "description": "User's membership role." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Account creation timestamp." }
+      },
+      "required": ["uid", "email"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "A customer inquiry for a specific vehicle.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the inquiry." },
+        "vehicleId": { "type": "string", "description": "ID of the vehicle being inquired about." },
+        "vehicleName": { "type": "string", "description": "Name of the vehicle." },
+        "userName": { "type": "string", "description": "Name of the customer." },
+        "userEmail": { "type": "string", "format": "email", "description": "Email of the customer." },
+        "message": { "type": "string", "description": "Customer's message." },
+        "status": { "type": "string", "enum": ["pending", "contacted", "closed"], "description": "Status of the inquiry." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of the inquiry." }
+      },
+      "required": ["vehicleId", "userName", "userEmail", "message"]
+    }
+  },
+  "firestore": {
+    "/inventory": {
+      "schema": "Vehicle",
+      "description": "Global inventory of vehicles available for purchase or viewing."
+    },
+    "/inquiries": {
+      "schema": "Inquiry",
+      "description": "Customer inquiries for vehicles (Admin only access)."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profile data."
+    },
+    "/users/{userId}/garage": {
+      "schema": "Vehicle",
+      "description": "Private garage of vehicles owned by the user."
+    }
+  }
+}
