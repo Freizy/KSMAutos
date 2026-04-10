@@ -8,13 +8,13 @@ interface InventoryProps {
   vehicles: Vehicle[];
   onInquire: (vehicle: Vehicle) => void;
   onCompare: (vehicle: Vehicle) => void;
+  onViewDetails: (vehicle: Vehicle) => void;
   comparingIds: string[];
 }
 
-export default function Inventory({ vehicles, onInquire, onCompare, comparingIds }: InventoryProps) {
+export default function Inventory({ vehicles, onInquire, onCompare, onViewDetails, comparingIds }: InventoryProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [sortOption, setSortOption] = useState<'price-asc' | 'price-desc' | 'year-desc' | 'horsepower-desc' | 'speed-desc'>('price-desc');
   const [categoryFilter, setCategoryFilter] = useState<string>('All');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [showFilters, setShowFilters] = useState(false);
@@ -30,23 +30,6 @@ export default function Inventory({ vehicles, onInquire, onCompare, comparingIds
     const matchesPrice = (v.price || 0) >= priceRange[0] && (v.price || 0) <= priceRange[1];
 
     return matchesSearch && matchesCategory && matchesPrice;
-  });
-
-  const sortedVehicles = [...filteredVehicles].sort((a, b) => {
-    switch (sortOption) {
-      case 'price-asc':
-        return (a.price || 0) - (b.price || 0);
-      case 'price-desc':
-        return (b.price || 0) - (a.price || 0);
-      case 'year-desc':
-        return b.year - a.year;
-      case 'horsepower-desc':
-        return (b.horsepower || 0) - (a.horsepower || 0);
-      case 'speed-desc':
-        return (b.topSpeed || 0) - (a.topSpeed || 0);
-      default:
-        return 0;
-    }
   });
 
   return (
@@ -65,7 +48,7 @@ export default function Inventory({ vehicles, onInquire, onCompare, comparingIds
             />
           </div>
 
-          <div className="flex flex-col gap-4 w-full md:w-auto md:flex-row md:items-center md:gap-4">
+          <div className="flex items-center gap-4 w-full md:w-auto">
             <div className="flex items-center bg-white/5 border border-line rounded-sm p-1">
               <button 
                 onClick={() => setViewMode('grid')}
@@ -80,23 +63,6 @@ export default function Inventory({ vehicles, onInquire, onCompare, comparingIds
                 <ListIcon className="w-4 h-4" />
               </button>
             </div>
-
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-muted">
-              <label htmlFor="sort" className="hidden md:inline">Sort:</label>
-              <select
-                id="sort"
-                value={sortOption}
-                onChange={(e) => setSortOption(e.target.value as any)}
-                className="bg-white/5 border border-line text-[10px] uppercase tracking-widest font-bold p-3 rounded-sm outline-none focus:border-accent"
-              >
-                <option value="price-desc">Price: High to Low</option>
-                <option value="price-asc">Price: Low to High</option>
-                <option value="year-desc">Newest First</option>
-                <option value="horsepower-desc">Most Power</option>
-                <option value="speed-desc">Fastest Top Speed</option>
-              </select>
-            </div>
-
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className={`flex items-center gap-2 px-4 py-3 border rounded-sm text-xs font-bold uppercase tracking-widest transition-colors ${showFilters ? 'bg-accent text-bg border-accent' : 'bg-white/5 border-line text-muted hover:bg-white/10'}`}
@@ -174,12 +140,13 @@ export default function Inventory({ vehicles, onInquire, onCompare, comparingIds
       {/* Vehicle List */}
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {sortedVehicles.map((vehicle) => (
+          {filteredVehicles.map((vehicle) => (
             <VehicleCard 
               key={vehicle.id} 
               vehicle={vehicle} 
               onInquire={onInquire}
               onCompare={onCompare}
+              onViewDetails={onViewDetails}
               isComparing={comparingIds.includes(vehicle.id)}
             />
           ))}
@@ -192,7 +159,7 @@ export default function Inventory({ vehicles, onInquire, onCompare, comparingIds
             <div className="col-header">Performance</div>
             <div className="col-header text-right">Price</div>
           </div>
-          {sortedVehicles.map((vehicle) => (
+          {filteredVehicles.map((vehicle) => (
             <div 
               key={vehicle.id} 
               className="data-row"

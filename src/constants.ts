@@ -23,7 +23,12 @@ export const INITIAL_INVENTORY: Vehicle[] = [
     description: "The Hennessey Venom F5 is a high-performance sports car manufactured by the American vehicle-manufacturing company Hennessey Special Vehicles.",
     features: ["Carbon Fiber Monocoque", "Active Aero", "Bespoke Interior"],
     exteriorColor: "Venom Yellow",
-    interiorColor: "Black Alcantara"
+    interiorColor: "Black Alcantara",
+    images: [
+      "https://images.unsplash.com/photo-1614162692292-7ac56d7f7f1e?auto=format&fit=crop&q=80&w=1000",
+      "https://images.unsplash.com/photo-1592198084033-aade902d1aae?auto=format&fit=crop&q=80&w=1000",
+      "https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&q=80&w=1000"
+    ]
   },
   {
     id: "jesko-absolut",
@@ -47,7 +52,12 @@ export const INITIAL_INVENTORY: Vehicle[] = [
     description: "The Jesko Absolut is the fastest Koenigsegg ever made and the company will never endeavor to make a faster street-legal series production car.",
     features: ["Light Speed Transmission", "Carbon Fiber Wheels", "Ghost Mode"],
     exteriorColor: "Graphite Grey",
-    interiorColor: "Desaturated Orange"
+    interiorColor: "Desaturated Orange",
+    images: [
+      "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?auto=format&fit=crop&q=80&w=1000",
+      "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&q=80&w=1000",
+      "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&q=80&w=1000"
+    ]
   },
   {
     id: "valkyrie",
@@ -66,6 +76,11 @@ export const INITIAL_INVENTORY: Vehicle[] = [
     fuelDelivery: "DIRECT INJECTION",
     imageUrl: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&q=80&w=1000",
     category: "Hypercars",
-    status: "sold"
+    status: "sold",
+    images: [
+      "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&q=80&w=1000",
+      "https://images.unsplash.com/photo-1542362567-b055002b91f4?auto=format&fit=crop&q=80&w=1000",
+      "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&q=80&w=1000"
+    ]
   }
 ];

@@ -24,6 +24,7 @@ export interface Vehicle {
   features?: string[];
   exteriorColor?: string;
   interiorColor?: string;
+  images?: string[];
 }
 
 export interface Inquiry {
@@ -44,4 +45,11 @@ export interface UserProfile {
   photoUrl: string | null;
   role: 'user' | 'admin' | 'elite';
   createdAt: string;
+}
+
+export interface SiteSettings {
+  maintenanceMode: boolean;
+  inquiryNotifications: boolean;
+  primaryAccentColor: string;
+  contactEmail: string;
 }
