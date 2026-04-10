@@ -16,7 +16,12 @@ import {
   ChevronRight,
   ChevronLeft,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Users as UsersIcon,
+  Settings as SettingsIcon,
+  ShieldCheck,
+  UserPlus,
+  UserMinus
 } from 'lucide-react';
 import { 
   collection, 
@@ -30,7 +35,7 @@ import {
   Timestamp 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Vehicle, Inquiry } from '../types';
+import { Vehicle, Inquiry, UserProfile } from '../types';
 
 interface AdminDashboardProps {
   user: any;
@@ -39,7 +44,8 @@ interface AdminDashboardProps {
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [inventory, setInventory] = useState<Vehicle[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-  const [activeView, setActiveView] = useState<'inventory' | 'inquiries' | 'stats'>('inventory');
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [activeView, setActiveView] = useState<'inventory' | 'inquiries' | 'users' | 'settings'>('inventory');
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<Vehicle | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -48,6 +54,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   useEffect(() => {
     const inventoryQuery = query(collection(db, 'inventory'), orderBy('year', 'desc'));
     const inquiriesQuery = query(collection(db, 'inquiries'), orderBy('createdAt', 'desc'));
+    const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
 
     const unsubInventory = onSnapshot(inventoryQuery, (snapshot) => {
       setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle)));
@@ -58,9 +65,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       setInquiries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Inquiry)));
     }, (err) => handleFirestoreError(err, OperationType.LIST, 'inquiries'));
 
+    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
+      setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as UserProfile)));
+    }, (err) => handleFirestoreError(err, OperationType.LIST, 'users'));
+
     return () => {
       unsubInventory();
       unsubInquiries();
+      unsubUsers();
     };
   }, []);
 
@@ -78,6 +90,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       await updateDoc(doc(db, 'inquiries', id), { status });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `inquiries/${id}`);
+    }
+  };
+
+  const handleUpdateUserRole = async (uid: string, role: UserProfile['role']) => {
+    if (uid === user.uid) {
+      alert("You cannot change your own role.");
+      return;
+    }
+    try {
+      await updateDoc(doc(db, 'users', uid), { role });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${uid}`);
     }
   };
 
@@ -116,9 +140,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       </div>
 
       {/* View Switcher */}
-      <div className="flex border-b border-line">
-        <ViewTab active={activeView === 'inventory'} onClick={() => setActiveView('inventory')} label="Inventory" />
-        <ViewTab active={activeView === 'inquiries'} onClick={() => setActiveView('inquiries')} label="Inquiries" />
+      <div className="flex border-b border-line overflow-x-auto">
+        <ViewTab active={activeView === 'inventory'} onClick={() => setActiveView('inventory')} label="Inventory" icon={<Car className="w-3 h-3" />} />
+        <ViewTab active={activeView === 'inquiries'} onClick={() => setActiveView('inquiries')} label="Inquiries" icon={<MessageSquare className="w-3 h-3" />} />
+        <ViewTab active={activeView === 'users'} onClick={() => setActiveView('users')} label="Users" icon={<UsersIcon className="w-3 h-3" />} />
+        <ViewTab active={activeView === 'settings'} onClick={() => setActiveView('settings')} label="Settings" icon={<SettingsIcon className="w-3 h-3" />} />
       </div>
 
       {/* Content */}
@@ -129,8 +155,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           </div>
         ) : activeView === 'inventory' ? (
           <InventoryList inventory={inventory} onDelete={handleDeleteVehicle} onEdit={setIsEditing} />
-        ) : (
+        ) : activeView === 'inquiries' ? (
           <InquiriesList inquiries={inquiries} onUpdateStatus={handleUpdateInquiryStatus} />
+        ) : activeView === 'users' ? (
+          <UsersList users={users} onUpdateRole={handleUpdateUserRole} currentUserUid={user.uid} />
+        ) : (
+          <SettingsView />
         )}
       </div>
 
@@ -159,14 +189,125 @@ const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string
   </div>
 );
 
-const ViewTab = ({ active, onClick, label }: { active: boolean, onClick: () => void, label: string }) => (
+const ViewTab = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon?: React.ReactNode }) => (
   <button 
     onClick={onClick}
-    className={`px-8 py-4 text-[10px] uppercase tracking-widest font-bold transition-all relative ${active ? 'text-accent' : 'text-muted hover:text-ink'}`}
+    className={`px-8 py-4 text-[10px] uppercase tracking-widest font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${active ? 'text-accent' : 'text-muted hover:text-ink'}`}
   >
+    {icon}
     {label}
     {active && <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />}
   </button>
+);
+
+const UsersList = ({ users, onUpdateRole, currentUserUid }: { users: UserProfile[], onUpdateRole: (uid: string, role: UserProfile['role']) => void, currentUserUid: string }) => (
+  <div className="flex flex-col gap-2">
+    {users.map(profile => (
+      <div key={profile.uid} className="glass p-4 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          {profile.photoUrl ? (
+            <img src={profile.photoUrl} alt="" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+          ) : (
+            <div className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full">
+              <UsersIcon className="w-5 h-5 text-muted" />
+            </div>
+          )}
+          <div>
+            <div className="text-sm font-bold tracking-tight">{profile.displayName || 'Anonymous User'}</div>
+            <div className="text-[10px] text-muted font-mono">{profile.email}</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-end">
+            <div className="text-[8px] uppercase tracking-widest font-bold text-muted mb-1">Role</div>
+            <div className={`text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-sm ${profile.role === 'admin' ? 'bg-accent text-bg' : 'bg-white/5 text-ink'}`}>
+              {profile.role}
+            </div>
+          </div>
+          {profile.uid !== currentUserUid && (
+            <div className="flex gap-1">
+              {profile.role !== 'admin' ? (
+                <button 
+                  onClick={() => onUpdateRole(profile.uid, 'admin')}
+                  className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-accent transition-colors"
+                  title="Promote to Admin"
+                >
+                  <UserPlus className="w-4 h-4" />
+                </button>
+              ) : (
+                <button 
+                  onClick={() => onUpdateRole(profile.uid, 'user')}
+                  className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-red-500 transition-colors"
+                  title="Demote to User"
+                >
+                  <UserMinus className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
+const SettingsView = () => (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="glass p-8 flex flex-col gap-6">
+      <div>
+        <h3 className="text-xl font-bold tracking-tighter uppercase">Site Configuration</h3>
+        <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">General platform settings</p>
+      </div>
+      
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between p-4 bg-white/5 rounded-sm border border-line">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest">Maintenance Mode</div>
+            <div className="text-[10px] text-muted">Disable public access to the showroom</div>
+          </div>
+          <div className="w-12 h-6 bg-white/10 rounded-full relative cursor-pointer opacity-50">
+            <div className="absolute left-1 top-1 w-4 h-4 bg-muted rounded-full" />
+          </div>
+        </div>
+        
+        <div className="flex items-center justify-between p-4 bg-white/5 rounded-sm border border-line">
+          <div>
+            <div className="text-xs font-bold uppercase tracking-widest">Inquiry Notifications</div>
+            <div className="text-[10px] text-muted">Send email alerts for new inquiries</div>
+          </div>
+          <div className="w-12 h-6 bg-accent/20 rounded-full relative cursor-pointer">
+            <div className="absolute right-1 top-1 w-4 h-4 bg-accent rounded-full" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="glass p-8 flex flex-col gap-6">
+      <div>
+        <h3 className="text-xl font-bold tracking-tighter uppercase">Branding & Identity</h3>
+        <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">Visual system controls</p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Primary Accent Color</label>
+          <div className="flex gap-2">
+            <div className="w-8 h-8 bg-[#E2FF00] rounded-sm border border-white/20" />
+            <input className="flex-1 bg-white/5 border border-line p-2 rounded-sm text-xs outline-none" value="#E2FF00" readOnly />
+          </div>
+        </div>
+        
+        <div className="flex flex-col gap-1">
+          <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Contact Email</label>
+          <input className="bg-white/5 border border-line p-3 rounded-sm text-sm outline-none" value="sales@ksmautos.com" readOnly />
+        </div>
+      </div>
+      
+      <button className="w-full py-4 border border-accent/30 text-accent font-bold uppercase tracking-widest text-[10px] rounded-sm hover:bg-accent/10 transition-all mt-4">
+        Save Site Settings
+      </button>
+    </div>
+  </div>
 );
 
 const InventoryList = ({ inventory, onDelete, onEdit }: { inventory: Vehicle[], onDelete: (id: string) => void, onEdit: (v: Vehicle) => void }) => (
