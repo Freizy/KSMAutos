@@ -1,38 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Outfit", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-bg: #050505;
+  --color-bg: #030303;
   --color-ink: #FFFFFF;
   --color-accent: #D1DE39;
-  --color-muted: #8E9299;
-  --color-line: rgba(255, 255, 255, 0.1);
+  --color-muted: #84888F;
+  --color-line: rgba(255, 255, 255, 0.08);
 }
 
 @layer base {
   body {
-    @apply bg-bg text-ink font-sans antialiased;
+    @apply bg-bg text-ink font-sans antialiased selection:bg-accent selection:text-bg;
   }
 
   /* Technical Dashboard Grid */
   .data-row {
-    @apply grid grid-cols-[40px_1.5fr_1fr_1fr] p-4 border-b border-line transition-all duration-200 cursor-pointer hover:bg-ink hover:text-bg;
+    @apply grid grid-cols-[40px_1.5fr_1fr_1fr] p-6 border-b border-line transition-all duration-300 cursor-pointer hover:bg-accent hover:text-bg;
   }
 
   .col-header {
-    @apply font-serif italic text-[11px] opacity-50 uppercase tracking-widest;
+    @apply font-display text-[10px] opacity-40 uppercase tracking-[0.2em] font-black;
   }
 
   .data-value {
-    @apply font-mono tracking-tighter;
+    @apply font-mono tracking-tight font-bold;
   }
 
-  /* Glass Morphism */
+  /* Glass Morphism Premium */
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+    @apply bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-[32px] shadow-2xl;
+  }
+
+  .glass-premium {
+    @apply bg-black/40 backdrop-blur-[40px] border border-white/10 rounded-[40px] shadow-[0_32px_64px_rgba(0,0,0,0.5)];
   }
 }
 

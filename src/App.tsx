@@ -464,8 +464,12 @@ export default function App() {
                 </div>
               </div>
 
-              <VehicleCompare vehicles={inventory} />
-            </motion.div>
+              <VehicleCompare 
+              vehicles={inventory} 
+              selectedIds={comparingIds}
+              onToggleVehicle={(id) => handleCompare(inventory.find(v => v.id === id)!)}
+            />
+          </motion.div>
           )}
 
           {activeTab === "garage" && user && (
