@@ -38,6 +38,8 @@ import {
   Plus,
   ShieldAlert,
   ArrowRight,
+  Menu,
+  X,
 } from "lucide-react";
 
 // Components
@@ -65,6 +67,7 @@ export default function App() {
   const [comparingIds, setComparingIds] = useState<string[]>([]);
   const showroomRef = React.useRef<HTMLDivElement>(null);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const scrollToShowroom = () => {
     showroomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -82,7 +85,6 @@ export default function App() {
     });
   };
 
-  
   const handleToggleWishlist = async (vehicleId: string) => {
     if (!user) {
       setShowAuthModal(true);
@@ -90,18 +92,21 @@ export default function App() {
     }
 
     const newWishlist = wishlist.includes(vehicleId)
-      ? wishlist.filter(id => id !== vehicleId)
+      ? wishlist.filter((id) => id !== vehicleId)
       : [...wishlist, vehicleId];
 
     setWishlist(newWishlist);
 
     try {
-      await setDoc(doc(db, 'users', user.uid), { wishlist: newWishlist }, { merge: true });
+      await setDoc(
+        doc(db, "users", user.uid),
+        { wishlist: newWishlist },
+        { merge: true },
+      );
     } catch (error) {
-      console.error('Error updating wishlist:', error);
+      console.error("Error updating wishlist:", error);
     }
   };
-
 
   const handleViewDetails = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
@@ -194,6 +199,15 @@ export default function App() {
     return () => unsub();
   }, []);
 
+  // Lock scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+  }, [isMobileMenuOpen]);
+
   const handleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
@@ -267,28 +281,47 @@ export default function App() {
       )}
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-line bg-bg/80 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-[100] border-b border-line bg-bg/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <div
-              className="flex items-center gap-2 cursor-pointer group"
-              onClick={() => setActiveTab("showroom")}
+            <motion.div
+              className="flex items-center gap-3 cursor-pointer group"
+              onClick={() => {
+                if (window.innerWidth < 768) {
+                  setIsMobileMenuOpen(!isMobileMenuOpen);
+                } else {
+                  setActiveTab("showroom");
+                  setIsMobileMenuOpen(false);
+                }
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <div className="w-8 h-8 bg-accent flex items-center justify-center rounded-sm transform group-hover:rotate-12 transition-transform">
-                <Gauge className="w-5 h-5 text-bg" />
+              <div
+                className={cn(
+                  "w-10 h-10 bg-accent flex items-center justify-center rounded-xl transform transition-all duration-500",
+                  isMobileMenuOpen
+                    ? "rotate-180 bg-ink"
+                    : "group-hover:rotate-12",
+                )}
+              >
+                {isMobileMenuOpen ? (
+                  <X className="w-6 h-6 text-bg" />
+                ) : (
+                  <Gauge className="w-6 h-6 text-bg" />
+                )}
               </div>
-              <span className="font-bold tracking-tighter text-xl uppercase">
-                KSM Autos
-              </span>
-            </div>
+              <div className="flex flex-col -gap-1">
+                <span className="font-black tracking-tighter text-2xl uppercase leading-none">
+                  KSM
+                </span>
+                <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-accent font-bold">
+                  Systems
+                </span>
+              </div>
+            </motion.div>
 
-            <div className="hidden md:flex items-center gap-1">
-              <NavButton
-                active={activeTab === "showroom"}
-                onClick={() => setActiveTab("showroom")}
-                icon={<LayoutGrid className="w-4 h-4" />}
-                label="Showroom"
-              />
+            <div className="hidden md:flex items-center gap-1 ml-4 border-l border-line pl-8">
               <NavButton
                 active={activeTab === "garage"}
                 onClick={() =>
@@ -309,7 +342,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-4">
                 <button
@@ -353,6 +386,114 @@ export default function App() {
           </div>
         </div>
       </nav>
+
+      {/* Stylish Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] md:hidden"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 bg-bg/90 backdrop-blur-2xl"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+
+            <div className="relative h-full flex flex-col justify-center p-8 gap-12">
+              <div className="flex flex-col gap-4">
+                <p className="text-accent text-[10px] font-black uppercase tracking-[0.5em]">
+                  Command Center
+                </p>
+                <div className="flex flex-col gap-2">
+                  <MobileNavLink
+                    active={activeTab === "showroom"}
+                    onClick={() => {
+                      setActiveTab("showroom");
+                      setIsMobileMenuOpen(false);
+                    }}
+                    label="Showroom"
+                    icon={<LayoutGrid className="w-8 h-8" />}
+                    index={0}
+                  />
+                  <MobileNavLink
+                    active={activeTab === "garage"}
+                    onClick={() => {
+                      if (user) {
+                        setActiveTab("garage");
+                        setIsMobileMenuOpen(false);
+                      } else {
+                        setShowAuthModal(true);
+                        setIsMobileMenuOpen(false);
+                      }
+                    }}
+                    label="Private Garage"
+                    icon={<Car className="w-8 h-8" />}
+                    index={1}
+                  />
+                  {(profile?.role === "admin" ||
+                    user?.email?.toLowerCase() === "samenso100@gmail.com") && (
+                    <MobileNavLink
+                      active={activeTab === "admin"}
+                      onClick={() => {
+                        setActiveTab("admin");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      label="Admin Node"
+                      icon={<ShieldAlert className="w-8 h-8" />}
+                      index={2}
+                    />
+                  )}
+                  {user && (
+                    <MobileNavLink
+                      active={activeTab === "profile"}
+                      onClick={() => {
+                        setActiveTab("profile");
+                        setIsMobileMenuOpen(false);
+                      }}
+                      label="Operator Profile"
+                      icon={<UserIcon className="w-8 h-8" />}
+                      index={3}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {!user && (
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  onClick={() => {
+                    setShowAuthModal(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full py-6 bg-accent text-bg font-black uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-transform"
+                >
+                  <LogIn className="w-5 h-5" />
+                  Initialize Access
+                </motion.button>
+              )}
+
+              {user && (
+                <motion.button
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  onClick={handleLogout}
+                  className="w-full py-6 border border-white/10 text-muted font-black uppercase tracking-[0.2em] rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-transform"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Terminate Session
+                </motion.button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="pt-16 min-h-screen">
@@ -436,7 +577,6 @@ export default function App() {
                       onToggleWishlist={handleToggleWishlist}
                       comparingIds={comparingIds}
                       wishlist={wishlist}
-
                     />
                   </div>
 
@@ -464,12 +604,14 @@ export default function App() {
                 </div>
               </div>
 
-              <VehicleCompare 
-              vehicles={inventory} 
-              selectedIds={comparingIds}
-              onToggleVehicle={(id) => handleCompare(inventory.find(v => v.id === id)!)}
-            />
-          </motion.div>
+              <VehicleCompare
+                vehicles={inventory}
+                selectedIds={comparingIds}
+                onToggleVehicle={(id) =>
+                  handleCompare(inventory.find((v) => v.id === id)!)
+                }
+              />
+            </motion.div>
           )}
 
           {activeTab === "garage" && user && (
@@ -481,7 +623,13 @@ export default function App() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="max-w-7xl mx-auto px-4 py-12"
             >
-            <Garage user={user} inventory={inventory} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} onViewDetails={handleViewDetails} />
+              <Garage
+                user={user}
+                inventory={inventory}
+                wishlist={wishlist}
+                onToggleWishlist={handleToggleWishlist}
+                onViewDetails={handleViewDetails}
+              />
             </motion.div>
           )}
 
@@ -980,5 +1128,60 @@ function NavButton({
         />
       )}
     </button>
+  );
+}
+
+function MobileNavLink({
+  active,
+  onClick,
+  label,
+  icon,
+  index,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon: React.ReactNode;
+  index: number;
+}) {
+  return (
+    <motion.button
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: 0.1 + index * 0.1 }}
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-6 p-4 rounded-2xl w-full group transition-all",
+        active
+          ? "bg-accent/10 border border-accent/20"
+          : "hover:bg-white/5 opacity-60 hover:opacity-100",
+      )}
+    >
+      <div
+        className={cn(
+          "p-3 rounded-xl transition-all",
+          active
+            ? "bg-accent text-bg"
+            : "bg-white/5 text-muted group-hover:text-accent",
+        )}
+      >
+        {icon}
+      </div>
+      <div className="flex flex-col items-start translate-y-1">
+        <span
+          className={cn(
+            "text-3xl font-black tracking-tighter uppercase leading-none",
+            active ? "text-ink" : "text-muted",
+          )}
+        >
+          {label}
+        </span>
+        {active && (
+          <span className="text-[8px] font-black uppercase tracking-[0.4em] text-accent mt-1">
+            Active Terminal
+          </span>
+        )}
+      </div>
+    </motion.button>
   );
 }
