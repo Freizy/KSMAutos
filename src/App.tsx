@@ -64,7 +64,7 @@ export default function App() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [comparingIds, setComparingIds] = useState<string[]>([]);
   const showroomRef = React.useRef<HTMLDivElement>(null);
-
+  const [wishlist, setWishlist] = useState<string[]>([]);
   const scrollToShowroom = () => {
     showroomRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -81,6 +81,27 @@ export default function App() {
       return [...prev, vehicle.id];
     });
   };
+
+  
+  const handleToggleWishlist = async (vehicleId: string) => {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    const newWishlist = wishlist.includes(vehicleId)
+      ? wishlist.filter(id => id !== vehicleId)
+      : [...wishlist, vehicleId];
+
+    setWishlist(newWishlist);
+
+    try {
+      await setDoc(doc(db, 'users', user.uid), { wishlist: newWishlist }, { merge: true });
+    } catch (error) {
+      console.error('Error updating wishlist:', error);
+    }
+  };
+
 
   const handleViewDetails = (vehicle: Vehicle) => {
     setSelectedVehicle(vehicle);
@@ -109,8 +130,11 @@ export default function App() {
             };
             await setDoc(userDocRef, newProfile);
             setProfile(newProfile);
+            setWishlist([]);
           } else {
-            setProfile(userDoc.data() as UserProfile);
+            const data = userDoc.data() as UserProfile;
+            setProfile(data);
+            setWishlist(data.wishlist || []);
           }
         } catch (error) {
           handleFirestoreError(
@@ -409,7 +433,10 @@ export default function App() {
                       }}
                       onCompare={handleCompare}
                       onViewDetails={handleViewDetails}
+                      onToggleWishlist={handleToggleWishlist}
                       comparingIds={comparingIds}
+                      wishlist={wishlist}
+
                     />
                   </div>
 
@@ -450,7 +477,7 @@ export default function App() {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className="max-w-7xl mx-auto px-4 py-12"
             >
-              <Garage user={user} />
+            <Garage user={user} inventory={inventory} wishlist={wishlist} onToggleWishlist={handleToggleWishlist} onViewDetails={handleViewDetails} />
             </motion.div>
           )}
 
@@ -875,7 +902,10 @@ export default function App() {
             </a>
           </div>
           <div className="font-mono text-[10px] opacity-30">
-            © 2026 KSM_AUTOS_SYSTEMS.V4
+            © 2026 KSM AUTOS
+          </div>
+          <div className="font-mono text-[10px] opacity-30">
+            Powered by Freizy ❣
           </div>
         </div>
       </footer>

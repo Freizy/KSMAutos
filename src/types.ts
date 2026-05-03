@@ -45,6 +45,7 @@ export interface UserProfile {
   photoUrl: string | null;
   role: 'user' | 'admin' | 'elite';
   createdAt: string;
+  wishlist?: string[];
 }
 
 export interface SiteSettings {

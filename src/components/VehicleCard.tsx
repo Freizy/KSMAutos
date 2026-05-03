@@ -1,7 +1,7 @@
 import React from 'react';
 import { Vehicle } from '../types';
 import { motion } from 'motion/react';
-import { Gauge, Zap, Activity, ChevronRight, Car, Info } from 'lucide-react';
+import { Gauge, Zap, Activity, ChevronRight, Car, Heart } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface VehicleCardProps {
@@ -9,10 +9,20 @@ interface VehicleCardProps {
   onInquire: (vehicle: Vehicle) => void;
   onCompare: (vehicle: Vehicle) => void;
   onViewDetails: (vehicle: Vehicle) => void;
+  onToggleWishlist?: (vehicleId: string) => void;
   isComparing?: boolean;
+  isWishlisted?: boolean;
 }
 
-export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onInquire, onCompare, onViewDetails, isComparing }) => {
+export const VehicleCard: React.FC<VehicleCardProps> = ({ 
+  vehicle, 
+  onInquire, 
+  onCompare, 
+  onViewDetails, 
+  onToggleWishlist,
+  isComparing,
+  isWishlisted
+}) => {
   return (
     <motion.div
       layout
@@ -48,16 +58,32 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onInquire, on
         </div>
 
         {/* Compare Toggle */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
         <button 
           onClick={(e) => { e.stopPropagation(); onCompare(vehicle); }}
           className={cn(
-            "absolute top-4 right-4 p-2 rounded-full transition-all z-10",
+            "p-2 rounded-full transition-all",
             isComparing ? "bg-accent text-bg" : "bg-bg/60 backdrop-blur-md text-muted hover:text-accent border border-line"
           )}
           title="Add to Comparison"
         >
           <Car className="w-4 h-4" />
         </button>
+        
+          {onToggleWishlist && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); onToggleWishlist(vehicle.id); }}
+              className={cn(
+                "p-2 rounded-full transition-all",
+                isWishlisted ? "bg-red-500 text-white" : "bg-bg/60 backdrop-blur-md text-muted hover:text-red-500 border border-line"
+              )}
+              title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+            >
+              <Heart className={cn("w-4 h-4", isWishlisted && "fill-current")} />
+            </button>
+          )}
+        </div>
+
 
         {/* Category Badge */}
         <div className="absolute bottom-4 left-4">
