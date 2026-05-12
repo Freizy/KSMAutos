@@ -20,8 +20,8 @@ router.post("/notify-inquiry", async (req, res) => {
   try {
     const resend = new Resend(RESEND_API_KEY);
     await resend.emails.send({
-      from: 'KSM Autos <notifications@ksmautos.systems>',
-      to: contactEmail || 'sales@ksmautos.systems',
+      from: 'KSM Autos <ksmautos.freizy@gmail.com>',
+      to: contactEmail || 'ksmautos.freizy@gmail.com',
       subject: `New Inquiry: ${vehicleName}`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #030303;">

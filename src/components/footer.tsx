@@ -140,7 +140,7 @@ const Footer: React.FC<FooterProps> = ({ onOpenInfo }) => {
                       <div className="text-accent font-bold mb-1">
                         Direct Uplink
                       </div>
-                      <p className="opacity-70">support@ksm-autos.systems</p>
+                      <p className="opacity-70">ksmautos.freizy@gmail.com</p>
                     </div>
                     <div className="glass p-4">
                       <div className="text-accent font-bold mb-1">

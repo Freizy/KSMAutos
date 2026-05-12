@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Plus, 
-  Trash2, 
-  Edit3, 
-  MessageSquare, 
-  Car, 
-  TrendingUp, 
-  DollarSign, 
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Plus,
+  Trash2,
+  Edit3,
+  MessageSquare,
+  Car,
+  TrendingUp,
+  DollarSign,
   Clock,
   CheckCircle2,
   XCircle,
@@ -21,23 +21,23 @@ import {
   Settings as SettingsIcon,
   ShieldCheck,
   UserPlus,
-  UserMinus
-} from 'lucide-react';
-import { 
-  collection, 
-  onSnapshot, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  query, 
+  UserMinus,
+} from "lucide-react";
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
   orderBy,
   Timestamp,
-  setDoc
-} from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../firebase';
-import { Vehicle, Inquiry, UserProfile, SiteSettings } from '../types';
-import { cn } from '../lib/utils';
+  setDoc,
+} from "firebase/firestore";
+import { db, handleFirestoreError, OperationType } from "../firebase";
+import { Vehicle, Inquiry, UserProfile, SiteSettings } from "../types";
+import { cn } from "../lib/utils";
 interface AdminDashboardProps {
   user: any;
 }
@@ -49,39 +49,78 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [settings, setSettings] = useState<SiteSettings>({
     maintenanceMode: false,
     inquiryNotifications: true,
-    primaryAccentColor: '#E2FF00',
-    contactEmail: 'sales@ksmautos.com'
+    primaryAccentColor: "#E2FF00",
+    contactEmail: "ksmautos.freizy@gmail.com",
   });
-  const [activeView, setActiveView] = useState<'inventory' | 'inquiries' | 'users' | 'settings'>('inventory');
+  const [activeView, setActiveView] = useState<
+    "inventory" | "inquiries" | "users" | "settings"
+  >("inventory");
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState<Vehicle | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Fetch data
   useEffect(() => {
-    const inventoryQuery = query(collection(db, 'inventory'), orderBy('year', 'desc'));
-    const inquiriesQuery = query(collection(db, 'inquiries'), orderBy('createdAt', 'desc'));
-    const usersQuery = query(collection(db, 'users'), orderBy('createdAt', 'desc'));
-    const settingsDoc = doc(db, 'settings', 'site');
+    const inventoryQuery = query(
+      collection(db, "inventory"),
+      orderBy("year", "desc"),
+    );
+    const inquiriesQuery = query(
+      collection(db, "inquiries"),
+      orderBy("createdAt", "desc"),
+    );
+    const usersQuery = query(
+      collection(db, "users"),
+      orderBy("createdAt", "desc"),
+    );
+    const settingsDoc = doc(db, "settings", "site");
 
-    const unsubInventory = onSnapshot(inventoryQuery, (snapshot) => {
-      setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Vehicle)));
-      setIsLoading(false);
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'inventory'));
+    const unsubInventory = onSnapshot(
+      inventoryQuery,
+      (snapshot) => {
+        setInventory(
+          snapshot.docs.map(
+            (doc) => ({ id: doc.id, ...doc.data() }) as Vehicle,
+          ),
+        );
+        setIsLoading(false);
+      },
+      (err) => handleFirestoreError(err, OperationType.LIST, "inventory"),
+    );
 
-    const unsubInquiries = onSnapshot(inquiriesQuery, (snapshot) => {
-      setInquiries(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Inquiry)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'inquiries'));
+    const unsubInquiries = onSnapshot(
+      inquiriesQuery,
+      (snapshot) => {
+        setInquiries(
+          snapshot.docs.map(
+            (doc) => ({ id: doc.id, ...doc.data() }) as Inquiry,
+          ),
+        );
+      },
+      (err) => handleFirestoreError(err, OperationType.LIST, "inquiries"),
+    );
 
-    const unsubUsers = onSnapshot(usersQuery, (snapshot) => {
-      setUsers(snapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as UserProfile)));
-    }, (err) => handleFirestoreError(err, OperationType.LIST, 'users'));
+    const unsubUsers = onSnapshot(
+      usersQuery,
+      (snapshot) => {
+        setUsers(
+          snapshot.docs.map(
+            (doc) => ({ ...doc.data(), uid: doc.id }) as UserProfile,
+          ),
+        );
+      },
+      (err) => handleFirestoreError(err, OperationType.LIST, "users"),
+    );
 
-    const unsubSettings = onSnapshot(settingsDoc, (snapshot) => {
-      if (snapshot.exists()) {
-        setSettings(snapshot.data() as SiteSettings);
-      }
-    }, (err) => handleFirestoreError(err, OperationType.GET, 'settings/site'));
+    const unsubSettings = onSnapshot(
+      settingsDoc,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          setSettings(snapshot.data() as SiteSettings);
+        }
+      },
+      (err) => handleFirestoreError(err, OperationType.GET, "settings/site"),
+    );
 
     return () => {
       unsubInventory();
@@ -92,29 +131,38 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   }, []);
 
   const handleDeleteVehicle = async (id: string) => {
-    if (!confirm('Are you sure you want to remove this vehicle from inventory?')) return;
+    if (
+      !confirm("Are you sure you want to remove this vehicle from inventory?")
+    )
+      return;
     try {
-      await deleteDoc(doc(db, 'inventory', id));
+      await deleteDoc(doc(db, "inventory", id));
     } catch (err) {
       handleFirestoreError(err, OperationType.DELETE, `inventory/${id}`);
     }
   };
 
-  const handleUpdateInquiryStatus = async (id: string, status: Inquiry['status']) => {
+  const handleUpdateInquiryStatus = async (
+    id: string,
+    status: Inquiry["status"],
+  ) => {
     try {
-      await updateDoc(doc(db, 'inquiries', id), { status });
+      await updateDoc(doc(db, "inquiries", id), { status });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `inquiries/${id}`);
     }
   };
 
-  const handleUpdateUserRole = async (uid: string, role: UserProfile['role']) => {
+  const handleUpdateUserRole = async (
+    uid: string,
+    role: UserProfile["role"],
+  ) => {
     if (uid === user.uid) {
       alert("You cannot change your own role.");
       return;
     }
     try {
-      await updateDoc(doc(db, 'users', uid), { role });
+      await updateDoc(doc(db, "users", uid), { role });
     } catch (err) {
       handleFirestoreError(err, OperationType.UPDATE, `users/${uid}`);
     }
@@ -122,18 +170,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
   const handleSaveSettings = async (newSettings: SiteSettings) => {
     try {
-      await setDoc(doc(db, 'settings', 'site'), newSettings);
-      alert('Settings saved successfully.');
+      await setDoc(doc(db, "settings", "site"), newSettings);
+      alert("Settings saved successfully.");
     } catch (err) {
-      handleFirestoreError(err, OperationType.WRITE, 'settings/site');
+      handleFirestoreError(err, OperationType.WRITE, "settings/site");
     }
   };
 
   const stats = {
     totalValue: inventory.reduce((acc, v) => acc + (v.price || 0), 0),
-    availableCount: inventory.filter(v => v.status === 'available').length,
-    newInquiries: inquiries.filter(i => i.status === 'new').length,
-    soldCount: inventory.filter(v => v.status === 'sold').length
+    availableCount: inventory.filter((v) => v.status === "available").length,
+    newInquiries: inquiries.filter((i) => i.status === "new").length,
+    soldCount: inventory.filter((v) => v.status === "sold").length,
   };
 
   return (
@@ -141,11 +189,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">Admin Control</h1>
-          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-2">KSM Autos Management System</p>
+          <h1 className="text-4xl font-black tracking-tighter uppercase leading-none">
+            Admin Control
+          </h1>
+          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-2">
+            KSM Autos Management System
+          </p>
         </div>
         <div className="flex gap-2">
-          <button 
+          <button
             onClick={() => setShowAddModal(true)}
             className="flex items-center gap-2 px-6 py-3 bg-accent text-bg font-bold text-xs uppercase tracking-widest rounded-sm hover:scale-105 transition-all"
           >
@@ -157,18 +209,54 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard icon={<DollarSign />} label="Inventory Value" value={`$${(stats.totalValue / 1000000).toFixed(1)}M`} />
-        <StatCard icon={<Car />} label="Available Units" value={stats.availableCount} />
-        <StatCard icon={<MessageSquare />} label="New Leads" value={stats.newInquiries} />
-        <StatCard icon={<TrendingUp />} label="Sold Units" value={stats.soldCount} />
+        <StatCard
+          icon={<DollarSign />}
+          label="Inventory Value"
+          value={`$${(stats.totalValue / 1000000).toFixed(1)}M`}
+        />
+        <StatCard
+          icon={<Car />}
+          label="Available Units"
+          value={stats.availableCount}
+        />
+        <StatCard
+          icon={<MessageSquare />}
+          label="New Leads"
+          value={stats.newInquiries}
+        />
+        <StatCard
+          icon={<TrendingUp />}
+          label="Sold Units"
+          value={stats.soldCount}
+        />
       </div>
 
       {/* View Switcher */}
       <div className="flex border-b border-line overflow-x-auto">
-        <ViewTab active={activeView === 'inventory'} onClick={() => setActiveView('inventory')} label="Inventory" icon={<Car className="w-3 h-3" />} />
-        <ViewTab active={activeView === 'inquiries'} onClick={() => setActiveView('inquiries')} label="Inquiries" icon={<MessageSquare className="w-3 h-3" />} />
-        <ViewTab active={activeView === 'users'} onClick={() => setActiveView('users')} label="Users" icon={<UsersIcon className="w-3 h-3" />} />
-        <ViewTab active={activeView === 'settings'} onClick={() => setActiveView('settings')} label="Settings" icon={<SettingsIcon className="w-3 h-3" />} />
+        <ViewTab
+          active={activeView === "inventory"}
+          onClick={() => setActiveView("inventory")}
+          label="Inventory"
+          icon={<Car className="w-3 h-3" />}
+        />
+        <ViewTab
+          active={activeView === "inquiries"}
+          onClick={() => setActiveView("inquiries")}
+          label="Inquiries"
+          icon={<MessageSquare className="w-3 h-3" />}
+        />
+        <ViewTab
+          active={activeView === "users"}
+          onClick={() => setActiveView("users")}
+          label="Users"
+          icon={<UsersIcon className="w-3 h-3" />}
+        />
+        <ViewTab
+          active={activeView === "settings"}
+          onClick={() => setActiveView("settings")}
+          label="Settings"
+          icon={<SettingsIcon className="w-3 h-3" />}
+        />
       </div>
 
       {/* Content */}
@@ -177,12 +265,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
           <div className="flex items-center justify-center h-64">
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
           </div>
-        ) : activeView === 'inventory' ? (
-          <InventoryList inventory={inventory} onDelete={handleDeleteVehicle} onEdit={setIsEditing} />
-        ) : activeView === 'inquiries' ? (
-          <InquiriesList inquiries={inquiries} onUpdateStatus={handleUpdateInquiryStatus} />
-        ) : activeView === 'users' ? (
-          <UsersList users={users} onUpdateRole={handleUpdateUserRole} currentUserUid={user.uid} />
+        ) : activeView === "inventory" ? (
+          <InventoryList
+            inventory={inventory}
+            onDelete={handleDeleteVehicle}
+            onEdit={setIsEditing}
+          />
+        ) : activeView === "inquiries" ? (
+          <InquiriesList
+            inquiries={inquiries}
+            onUpdateStatus={handleUpdateInquiryStatus}
+          />
+        ) : activeView === "users" ? (
+          <UsersList
+            users={users}
+            onUpdateRole={handleUpdateUserRole}
+            currentUserUid={user.uid}
+          />
         ) : (
           <SettingsView settings={settings} onSave={handleSaveSettings} />
         )}
@@ -191,9 +290,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {(showAddModal || isEditing) && (
-          <VehicleFormModal 
-            vehicle={isEditing} 
-            onClose={() => { setShowAddModal(false); setIsEditing(null); }} 
+          <VehicleFormModal
+            vehicle={isEditing}
+            onClose={() => {
+              setShowAddModal(false);
+              setIsEditing(null);
+            }}
           />
         )}
       </AnimatePresence>
@@ -201,66 +303,117 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   );
 };
 
-const StatCard = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) => (
+const StatCard = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | number;
+}) => (
   <div className="glass p-6 flex items-center gap-4">
     <div className="w-12 h-12 bg-white/5 flex items-center justify-center rounded-sm text-accent">
       {icon}
     </div>
     <div>
-      <div className="text-[10px] text-muted uppercase tracking-widest font-bold">{label}</div>
-      <div className="text-2xl font-black tracking-tighter uppercase">{value}</div>
+      <div className="text-[10px] text-muted uppercase tracking-widest font-bold">
+        {label}
+      </div>
+      <div className="text-2xl font-black tracking-tighter uppercase">
+        {value}
+      </div>
     </div>
   </div>
 );
 
-const ViewTab = ({ active, onClick, label, icon }: { active: boolean, onClick: () => void, label: string, icon?: React.ReactNode }) => (
-  <button 
+const ViewTab = ({
+  active,
+  onClick,
+  label,
+  icon,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  icon?: React.ReactNode;
+}) => (
+  <button
     onClick={onClick}
-    className={`px-8 py-4 text-[10px] uppercase tracking-widest font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${active ? 'text-accent' : 'text-muted hover:text-ink'}`}
+    className={`px-8 py-4 text-[10px] uppercase tracking-widest font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${active ? "text-accent" : "text-muted hover:text-ink"}`}
   >
     {icon}
     {label}
-    {active && <motion.div layoutId="tab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />}
+    {active && (
+      <motion.div
+        layoutId="tab"
+        className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent"
+      />
+    )}
   </button>
 );
 
-const UsersList = ({ users, onUpdateRole, currentUserUid }: { users: UserProfile[], onUpdateRole: (uid: string, role: UserProfile['role']) => void, currentUserUid: string }) => (
+const UsersList = ({
+  users,
+  onUpdateRole,
+  currentUserUid,
+}: {
+  users: UserProfile[];
+  onUpdateRole: (uid: string, role: UserProfile["role"]) => void;
+  currentUserUid: string;
+}) => (
   <div className="flex flex-col gap-2">
-    {users.map(profile => (
-      <div key={profile.uid} className="glass p-4 flex items-center justify-between gap-4">
+    {users.map((profile) => (
+      <div
+        key={profile.uid}
+        className="glass p-4 flex items-center justify-between gap-4"
+      >
         <div className="flex items-center gap-4">
           {profile.photoUrl ? (
-            <img src={profile.photoUrl} alt="" className="w-10 h-10 rounded-full" referrerPolicy="no-referrer" />
+            <img
+              src={profile.photoUrl}
+              alt=""
+              className="w-10 h-10 rounded-full"
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <div className="w-10 h-10 bg-white/5 flex items-center justify-center rounded-full">
               <UsersIcon className="w-5 h-5 text-muted" />
             </div>
           )}
           <div>
-            <div className="text-sm font-bold tracking-tight">{profile.displayName || 'Anonymous User'}</div>
-            <div className="text-[10px] text-muted font-mono">{profile.email}</div>
+            <div className="text-sm font-bold tracking-tight">
+              {profile.displayName || "Anonymous User"}
+            </div>
+            <div className="text-[10px] text-muted font-mono">
+              {profile.email}
+            </div>
           </div>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex flex-col items-end">
-            <div className="text-[8px] uppercase tracking-widest font-bold text-muted mb-1">Role</div>
-            <div className={`text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-sm ${profile.role === 'admin' ? 'bg-accent text-bg' : 'bg-white/5 text-ink'}`}>
+            <div className="text-[8px] uppercase tracking-widest font-bold text-muted mb-1">
+              Role
+            </div>
+            <div
+              className={`text-[10px] uppercase tracking-widest font-black px-3 py-1 rounded-sm ${profile.role === "admin" ? "bg-accent text-bg" : "bg-white/5 text-ink"}`}
+            >
               {profile.role}
             </div>
           </div>
           {profile.uid !== currentUserUid && (
             <div className="flex gap-1">
-              {profile.role !== 'admin' ? (
-                <button 
-                  onClick={() => onUpdateRole(profile.uid, 'admin')}
+              {profile.role !== "admin" ? (
+                <button
+                  onClick={() => onUpdateRole(profile.uid, "admin")}
                   className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-accent transition-colors"
                   title="Promote to Admin"
                 >
                   <UserPlus className="w-4 h-4" />
                 </button>
               ) : (
-                <button 
-                  onClick={() => onUpdateRole(profile.uid, 'user')}
+                <button
+                  onClick={() => onUpdateRole(profile.uid, "user")}
                   className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-red-500 transition-colors"
                   title="Demote to User"
                 >
@@ -275,7 +428,13 @@ const UsersList = ({ users, onUpdateRole, currentUserUid }: { users: UserProfile
   </div>
 );
 
-const SettingsView = ({ settings, onSave }: { settings: SiteSettings, onSave: (s: SiteSettings) => void }) => {
+const SettingsView = ({
+  settings,
+  onSave,
+}: {
+  settings: SiteSettings;
+  onSave: (s: SiteSettings) => void;
+}) => {
   const [localSettings, setLocalSettings] = useState<SiteSettings>(settings);
 
   useEffect(() => {
@@ -286,34 +445,60 @@ const SettingsView = ({ settings, onSave }: { settings: SiteSettings, onSave: (s
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       <div className="glass p-8 flex flex-col gap-6">
         <div>
-          <h3 className="text-xl font-bold tracking-tighter uppercase">Site Configuration</h3>
-          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">General platform settings</p>
+          <h3 className="text-xl font-bold tracking-tighter uppercase">
+            Site Configuration
+          </h3>
+          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">
+            General platform settings
+          </p>
         </div>
-        
+
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between p-4 bg-white/5 rounded-sm border border-line">
             <div>
-              <div className="text-xs font-bold uppercase tracking-widest">Maintenance Mode</div>
-              <div className="text-[10px] text-muted">Disable public access to the showroom</div>
+              <div className="text-xs font-bold uppercase tracking-widest">
+                Maintenance Mode
+              </div>
+              <div className="text-[10px] text-muted">
+                Disable public access to the showroom
+              </div>
             </div>
-            <div 
-              onClick={() => setLocalSettings({ ...localSettings, maintenanceMode: !localSettings.maintenanceMode })}
-              className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localSettings.maintenanceMode ? 'bg-accent/20' : 'bg-white/10'}`}
+            <div
+              onClick={() =>
+                setLocalSettings({
+                  ...localSettings,
+                  maintenanceMode: !localSettings.maintenanceMode,
+                })
+              }
+              className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localSettings.maintenanceMode ? "bg-accent/20" : "bg-white/10"}`}
             >
-              <div className={`absolute top-1 w-4 h-4 rounded-full transition-all ${localSettings.maintenanceMode ? 'right-1 bg-accent' : 'left-1 bg-muted'}`} />
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full transition-all ${localSettings.maintenanceMode ? "right-1 bg-accent" : "left-1 bg-muted"}`}
+              />
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between p-4 bg-white/5 rounded-sm border border-line">
             <div>
-              <div className="text-xs font-bold uppercase tracking-widest">Inquiry Notifications</div>
-              <div className="text-[10px] text-muted">Send email alerts for new inquiries</div>
+              <div className="text-xs font-bold uppercase tracking-widest">
+                Inquiry Notifications
+              </div>
+              <div className="text-[10px] text-muted">
+                Send email alerts for new inquiries
+              </div>
             </div>
-            <div 
-              onClick={() => setLocalSettings({ ...localSettings, inquiryNotifications: !localSettings.inquiryNotifications })}
-              className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localSettings.inquiryNotifications ? 'bg-accent/20' : 'bg-white/10'}`}
+            <div
+              onClick={() =>
+                setLocalSettings({
+                  ...localSettings,
+                  inquiryNotifications: !localSettings.inquiryNotifications,
+                })
+              }
+              className={`w-12 h-6 rounded-full relative cursor-pointer transition-colors ${localSettings.inquiryNotifications ? "bg-accent/20" : "bg-white/10"}`}
             >
-              <div className={`absolute top-1 w-4 h-4 rounded-full transition-all ${localSettings.inquiryNotifications ? 'right-1 bg-accent' : 'left-1 bg-muted'}`} />
+              <div
+                className={`absolute top-1 w-4 h-4 rounded-full transition-all ${localSettings.inquiryNotifications ? "right-1 bg-accent" : "left-1 bg-muted"}`}
+              />
             </div>
           </div>
         </div>
@@ -321,47 +506,70 @@ const SettingsView = ({ settings, onSave }: { settings: SiteSettings, onSave: (s
 
       <div className="glass p-8 flex flex-col gap-6">
         <div>
-          <h3 className="text-xl font-bold tracking-tighter uppercase">Branding & Identity</h3>
-          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">Visual system controls</p>
+          <h3 className="text-xl font-bold tracking-tighter uppercase">
+            Branding & Identity
+          </h3>
+          <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">
+            Visual system controls
+          </p>
         </div>
 
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Primary Accent Color</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+              Primary Accent Color
+            </label>
             <div className="flex gap-2">
-              <div 
-                className="w-8 h-8 rounded-sm border border-white/20" 
+              <div
+                className="w-8 h-8 rounded-sm border border-white/20"
                 style={{ backgroundColor: localSettings.primaryAccentColor }}
               />
-              <input 
+              <input
                 type="text"
-                className="flex-1 bg-white/5 border border-line p-2 rounded-sm text-xs outline-none focus:border-accent" 
-                value={localSettings.primaryAccentColor} 
-                onChange={(e) => setLocalSettings({ ...localSettings, primaryAccentColor: e.target.value })}
+                className="flex-1 bg-white/5 border border-line p-2 rounded-sm text-xs outline-none focus:border-accent"
+                value={localSettings.primaryAccentColor}
+                onChange={(e) =>
+                  setLocalSettings({
+                    ...localSettings,
+                    primaryAccentColor: e.target.value,
+                  })
+                }
                 placeholder="#E2FF00"
               />
-              <input 
+              <input
                 type="color"
                 className="w-8 h-8 bg-transparent border-none p-0 cursor-pointer"
                 value={localSettings.primaryAccentColor}
-                onChange={(e) => setLocalSettings({ ...localSettings, primaryAccentColor: e.target.value })}
+                onChange={(e) =>
+                  setLocalSettings({
+                    ...localSettings,
+                    primaryAccentColor: e.target.value,
+                  })
+                }
               />
             </div>
           </div>
-          
+
           <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Contact Email</label>
-            <input 
+            <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+              Contact Email
+            </label>
+            <input
               type="email"
-              className="bg-white/5 border border-line p-3 rounded-sm text-sm outline-none focus:border-accent" 
-              value={localSettings.contactEmail} 
-              onChange={(e) => setLocalSettings({ ...localSettings, contactEmail: e.target.value })}
-              placeholder="sales@ksmautos.com"
+              className="bg-white/5 border border-line p-3 rounded-sm text-sm outline-none focus:border-accent"
+              value={localSettings.contactEmail}
+              onChange={(e) =>
+                setLocalSettings({
+                  ...localSettings,
+                  contactEmail: e.target.value,
+                })
+              }
+              placeholder="ksmautos.freizy@gmail.com"
             />
           </div>
         </div>
-        
-        <button 
+
+        <button
           onClick={() => onSave(localSettings)}
           className="w-full py-4 bg-accent text-bg font-bold uppercase tracking-widest text-[10px] rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all mt-4"
         >
@@ -372,17 +580,38 @@ const SettingsView = ({ settings, onSave }: { settings: SiteSettings, onSave: (s
   );
 };
 
-const InventoryList = ({ inventory, onDelete, onEdit }: { inventory: Vehicle[], onDelete: (id: string) => void, onEdit: (v: Vehicle) => void }) => (
+const InventoryList = ({
+  inventory,
+  onDelete,
+  onEdit,
+}: {
+  inventory: Vehicle[];
+  onDelete: (id: string) => void;
+  onEdit: (v: Vehicle) => void;
+}) => (
   <div className="flex flex-col gap-2">
-    {inventory.map(vehicle => (
-      <div key={vehicle.id} className="glass p-4 flex items-center justify-between gap-4 group">
+    {inventory.map((vehicle) => (
+      <div
+        key={vehicle.id}
+        className="glass p-4 flex items-center justify-between gap-4 group"
+      >
         <div className="flex items-center gap-4">
-          <img src={vehicle.imageUrl} alt="" className="w-16 h-16 object-cover rounded-sm" />
+          <img
+            src={vehicle.imageUrl}
+            alt=""
+            className="w-16 h-16 object-cover rounded-sm"
+          />
           <div>
-            <div className="text-[10px] text-muted uppercase tracking-widest font-bold">{vehicle.year} {vehicle.make}</div>
-            <div className="text-lg font-black tracking-tighter uppercase leading-none">{vehicle.model}</div>
+            <div className="text-[10px] text-muted uppercase tracking-widest font-bold">
+              {vehicle.year} {vehicle.make}
+            </div>
+            <div className="text-lg font-black tracking-tighter uppercase leading-none">
+              {vehicle.model}
+            </div>
             <div className="flex gap-2 mt-1">
-              <span className={`text-[8px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full ${vehicle.status === 'available' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+              <span
+                className={`text-[8px] uppercase tracking-widest font-bold px-2 py-0.5 rounded-full ${vehicle.status === "available" ? "bg-green-500/10 text-green-500" : "bg-red-500/10 text-red-500"}`}
+              >
                 {vehicle.status}
               </span>
               <span className="text-[8px] uppercase tracking-widest font-bold text-muted px-2 py-0.5 bg-white/5 rounded-full">
@@ -393,14 +622,24 @@ const InventoryList = ({ inventory, onDelete, onEdit }: { inventory: Vehicle[], 
         </div>
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
-            <div className="text-[10px] text-muted uppercase tracking-widest font-bold">Price</div>
-            <div className="text-lg font-mono font-bold tracking-tighter">${vehicle.price?.toLocaleString()}</div>
+            <div className="text-[10px] text-muted uppercase tracking-widest font-bold">
+              Price
+            </div>
+            <div className="text-lg font-mono font-bold tracking-tighter">
+              ${vehicle.price?.toLocaleString()}
+            </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => onEdit(vehicle)} className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-accent transition-colors">
+            <button
+              onClick={() => onEdit(vehicle)}
+              className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-accent transition-colors"
+            >
               <Edit3 className="w-4 h-4" />
             </button>
-            <button onClick={() => onDelete(vehicle.id)} className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-red-500 transition-colors">
+            <button
+              onClick={() => onDelete(vehicle.id)}
+              className="p-2 hover:bg-white/5 rounded-sm text-muted hover:text-red-500 transition-colors"
+            >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
@@ -410,56 +649,94 @@ const InventoryList = ({ inventory, onDelete, onEdit }: { inventory: Vehicle[], 
   </div>
 );
 
-const InquiriesList = ({ inquiries, onUpdateStatus }: { inquiries: Inquiry[], onUpdateStatus: (id: string, status: Inquiry['status']) => void }) => {
-  const [filter, setFilter] = useState<Inquiry['status'] | 'all'>('all');
+const InquiriesList = ({
+  inquiries,
+  onUpdateStatus,
+}: {
+  inquiries: Inquiry[];
+  onUpdateStatus: (id: string, status: Inquiry["status"]) => void;
+}) => {
+  const [filter, setFilter] = useState<Inquiry["status"] | "all">("all");
 
-  const filteredInquiries = filter === 'all' 
-    ? inquiries 
-    : inquiries.filter(i => i.status === filter);
+  const filteredInquiries =
+    filter === "all" ? inquiries : inquiries.filter((i) => i.status === filter);
 
-  const getStatusColor = (status: Inquiry['status']) => {
+  const getStatusColor = (status: Inquiry["status"]) => {
     switch (status) {
-      case 'new': return 'bg-yellow-500';
-      case 'contacted': return 'bg-blue-500';
-      case 'qualified': return 'bg-purple-500';
-      case 'closed': return 'bg-green-500';
-      default: return 'bg-muted';
+      case "new":
+        return "bg-yellow-500";
+      case "contacted":
+        return "bg-blue-500";
+      case "qualified":
+        return "bg-purple-500";
+      case "closed":
+        return "bg-green-500";
+      default:
+        return "bg-muted";
     }
   };
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex gap-2 p-1 bg-white/5 rounded-sm self-start border border-line">
-        {(['all', 'new', 'contacted', 'qualified', 'closed'] as const).map(s => (
-          <button 
-            key={s}
-            onClick={() => setFilter(s)}
-            className={cn(
-              "px-4 py-1.5 text-[8px] uppercase tracking-widest font-black rounded-sm transition-all",
-              filter === s ? "bg-accent text-bg" : "text-muted hover:text-ink"
-            )}
-          >
-            {s}
-          </button>
-        ))}
+        {(["all", "new", "contacted", "qualified", "closed"] as const).map(
+          (s) => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={cn(
+                "px-4 py-1.5 text-[8px] uppercase tracking-widest font-black rounded-sm transition-all",
+                filter === s
+                  ? "bg-accent text-bg"
+                  : "text-muted hover:text-ink",
+              )}
+            >
+              {s}
+            </button>
+          ),
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
-        {filteredInquiries.map(inquiry => (
-          <div key={inquiry.id} className="glass p-6 flex flex-col gap-4 border-l-2" style={{ borderLeftColor: inquiry.status === 'new' ? 'var(--color-accent)' : 'transparent' }}>
+        {filteredInquiries.map((inquiry) => (
+          <div
+            key={inquiry.id}
+            className="glass p-6 flex flex-col gap-4 border-l-2"
+            style={{
+              borderLeftColor:
+                inquiry.status === "new"
+                  ? "var(--color-accent)"
+                  : "transparent",
+            }}
+          >
             <div className="flex justify-between items-start">
               <div className="flex items-center gap-4">
-                <div className={cn("w-2 h-2 rounded-full", getStatusColor(inquiry.status))} />
+                <div
+                  className={cn(
+                    "w-2 h-2 rounded-full",
+                    getStatusColor(inquiry.status),
+                  )}
+                />
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Inquiry for</span>
-                    <span className="text-[10px] text-accent uppercase tracking-widest font-black">{inquiry.vehicleName}</span>
+                    <span className="text-[10px] text-muted uppercase tracking-widest font-bold">
+                      Inquiry for
+                    </span>
+                    <span className="text-[10px] text-accent uppercase tracking-widest font-black">
+                      {inquiry.vehicleName}
+                    </span>
                   </div>
-                  <div className="text-xl font-black tracking-tighter uppercase leading-none mt-1">{inquiry.userName}</div>
+                  <div className="text-xl font-black tracking-tighter uppercase leading-none mt-1">
+                    {inquiry.userName}
+                  </div>
                   <div className="flex items-center gap-4 mt-2">
                     <div className="flex items-center gap-1.5 text-[10px] text-muted font-mono">
                       <Clock className="w-3 h-3" />
-                      {new Date(inquiry.createdAt).toLocaleDateString()} at {new Date(inquiry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(inquiry.createdAt).toLocaleDateString()} at{" "}
+                      {new Date(inquiry.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-accent font-medium">
                       <AlertCircle className="w-3 h-3" />
@@ -469,32 +746,37 @@ const InquiriesList = ({ inquiries, onUpdateStatus }: { inquiries: Inquiry[], on
                 </div>
               </div>
               <div className="px-3 py-1 bg-white/5 rounded-full border border-line">
-                <span className={cn("text-[8px] uppercase tracking-widest font-black", inquiry.status === 'new' ? "text-accent" : "text-muted")}>
+                <span
+                  className={cn(
+                    "text-[8px] uppercase tracking-widest font-black",
+                    inquiry.status === "new" ? "text-accent" : "text-muted",
+                  )}
+                >
                   {inquiry.status}
                 </span>
               </div>
             </div>
-            
+
             <div className="relative">
               <p className="text-sm text-muted bg-white/5 p-4 rounded-sm italic border-l-2 border-accent/20">
-                "{inquiry.message || 'No message provided.'}"
+                "{inquiry.message || "No message provided."}"
               </p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t border-line/50">
-              <ActionButton 
-                active={inquiry.status === 'contacted'} 
-                onClick={() => onUpdateStatus(inquiry.id, 'contacted')}
+              <ActionButton
+                active={inquiry.status === "contacted"}
+                onClick={() => onUpdateStatus(inquiry.id, "contacted")}
                 label="Contacted"
               />
-              <ActionButton 
-                active={inquiry.status === 'qualified'} 
-                onClick={() => onUpdateStatus(inquiry.id, 'qualified')}
+              <ActionButton
+                active={inquiry.status === "qualified"}
+                onClick={() => onUpdateStatus(inquiry.id, "qualified")}
                 label="Qualified"
               />
-              <ActionButton 
-                active={inquiry.status === 'closed'} 
-                onClick={() => onUpdateStatus(inquiry.id, 'closed')}
+              <ActionButton
+                active={inquiry.status === "closed"}
+                onClick={() => onUpdateStatus(inquiry.id, "closed")}
                 label="Close"
               />
             </div>
@@ -503,7 +785,9 @@ const InquiriesList = ({ inquiries, onUpdateStatus }: { inquiries: Inquiry[], on
         {filteredInquiries.length === 0 && (
           <div className="flex flex-col items-center justify-center h-64 text-muted gap-2">
             <MessageSquare className="w-12 h-12 opacity-20" />
-            <p className="text-[10px] uppercase tracking-widest font-bold">No {filter !== 'all' ? filter : ''} inquiries found</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold">
+              No {filter !== "all" ? filter : ""} inquiries found
+            </p>
           </div>
         )}
       </div>
@@ -511,70 +795,91 @@ const InquiriesList = ({ inquiries, onUpdateStatus }: { inquiries: Inquiry[], on
   );
 };
 
-const ActionButton = ({ active, onClick, label }: { active: boolean, onClick: () => void, label: string }) => (
-  <button 
+const ActionButton = ({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) => (
+  <button
     onClick={onClick}
     className={cn(
       "px-4 py-2 text-[8px] uppercase tracking-widest font-bold rounded-sm border transition-all",
-      active ? "bg-accent/10 border-accent text-accent" : "border-line text-muted hover:text-ink hover:border-muted"
+      active
+        ? "bg-accent/10 border-accent text-accent"
+        : "border-line text-muted hover:text-ink hover:border-muted",
     )}
   >
     {label}
   </button>
 );
 
-
-const VehicleFormModal = ({ vehicle, onClose }: { vehicle: Vehicle | null, onClose: () => void }) => {
-  const [formData, setFormData] = useState<Partial<Vehicle>>(vehicle || {
-    make: '',
-    model: '',
-    year: new Date().getFullYear(),
-    price: 0,
-    status: 'available',
-    category: 'Hypercars',
-    imageUrl: '',
-    horsepower: 0,
-    topSpeed: 0,
-    acceleration: 0,
-    transmission: '',
-    engine: '',
-    vin: '',
-    mileage: 0,
-    isFeatured: false,
-    description: '',
-    exteriorColor: '',
-    interiorColor: '',
-    features: []
-  });
+const VehicleFormModal = ({
+  vehicle,
+  onClose,
+}: {
+  vehicle: Vehicle | null;
+  onClose: () => void;
+}) => {
+  const [formData, setFormData] = useState<Partial<Vehicle>>(
+    vehicle || {
+      make: "",
+      model: "",
+      year: new Date().getFullYear(),
+      price: 0,
+      status: "available",
+      category: "Hypercars",
+      imageUrl: "",
+      horsepower: 0,
+      topSpeed: 0,
+      acceleration: 0,
+      transmission: "",
+      engine: "",
+      vin: "",
+      mileage: 0,
+      isFeatured: false,
+      description: "",
+      exteriorColor: "",
+      interiorColor: "",
+      features: [],
+    },
+  );
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (vehicle) {
-        await updateDoc(doc(db, 'inventory', vehicle.id), formData);
+        await updateDoc(doc(db, "inventory", vehicle.id), formData);
       } else {
-        await addDoc(collection(db, 'inventory'), {
+        await addDoc(collection(db, "inventory"), {
           ...formData,
           id: Math.random().toString(36).substr(2, 9),
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         });
       }
       onClose();
     } catch (err) {
-      handleFirestoreError(err, vehicle ? OperationType.UPDATE : OperationType.CREATE, 'inventory');
+      handleFirestoreError(
+        err,
+        vehicle ? OperationType.UPDATE : OperationType.CREATE,
+        "inventory",
+      );
     }
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
         className="absolute inset-0 bg-bg/90 backdrop-blur-sm"
       />
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -583,26 +888,64 @@ const VehicleFormModal = ({ vehicle, onClose }: { vehicle: Vehicle | null, onClo
         <div className="flex justify-between items-start">
           <div>
             <h2 className="text-2xl font-bold tracking-tighter uppercase leading-none">
-              {vehicle ? 'Edit Vehicle' : 'Add New Vehicle'}
+              {vehicle ? "Edit Vehicle" : "Add New Vehicle"}
             </h2>
-            <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">Inventory Control</p>
+            <p className="text-muted text-[10px] uppercase tracking-widest font-bold mt-1">
+              Inventory Control
+            </p>
           </div>
-          <button onClick={onClose} className="text-muted hover:text-ink">×</button>
+          <button onClick={onClose} className="text-muted hover:text-ink">
+            ×
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <form
+          onSubmit={handleSubmit}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
           <div className="flex flex-col gap-4">
-            <FormInput label="Make" value={formData.make} onChange={v => setFormData({...formData, make: v})} required />
-            <FormInput label="Model" value={formData.model} onChange={v => setFormData({...formData, model: v})} required />
-            <FormInput label="Year" type="number" value={formData.year} onChange={v => setFormData({...formData, year: parseInt(v)})} required />
-            <FormInput label="Price ($)" type="number" value={formData.price} onChange={v => setFormData({...formData, price: parseInt(v)})} required />
-            <FormInput label="Image URL" value={formData.imageUrl} onChange={v => setFormData({...formData, imageUrl: v})} required />
+            <FormInput
+              label="Make"
+              value={formData.make}
+              onChange={(v) => setFormData({ ...formData, make: v })}
+              required
+            />
+            <FormInput
+              label="Model"
+              value={formData.model}
+              onChange={(v) => setFormData({ ...formData, model: v })}
+              required
+            />
+            <FormInput
+              label="Year"
+              type="number"
+              value={formData.year}
+              onChange={(v) => setFormData({ ...formData, year: parseInt(v) })}
+              required
+            />
+            <FormInput
+              label="Price ($)"
+              type="number"
+              value={formData.price}
+              onChange={(v) => setFormData({ ...formData, price: parseInt(v) })}
+              required
+            />
+            <FormInput
+              label="Image URL"
+              value={formData.imageUrl}
+              onChange={(v) => setFormData({ ...formData, imageUrl: v })}
+              required
+            />
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Status</label>
-              <select 
+              <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+                Status
+              </label>
+              <select
                 className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none"
                 value={formData.status}
-                onChange={e => setFormData({...formData, status: e.target.value as any})}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value as any })
+                }
               >
                 <option value="available">Available</option>
                 <option value="sold">Sold</option>
@@ -610,54 +953,121 @@ const VehicleFormModal = ({ vehicle, onClose }: { vehicle: Vehicle | null, onClo
               </select>
             </div>
             <div className="flex items-center gap-2 mt-2">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 id="featured"
                 checked={formData.isFeatured}
-                onChange={e => setFormData({...formData, isFeatured: e.target.checked})}
+                onChange={(e) =>
+                  setFormData({ ...formData, isFeatured: e.target.checked })
+                }
                 className="w-4 h-4 accent-accent"
               />
-              <label htmlFor="featured" className="text-[10px] uppercase tracking-widest font-bold text-muted cursor-pointer">Featured Vehicle</label>
+              <label
+                htmlFor="featured"
+                className="text-[10px] uppercase tracking-widest font-bold text-muted cursor-pointer"
+              >
+                Featured Vehicle
+              </label>
             </div>
-          </div>
-          
-          <div className="flex flex-col gap-4">
-            <FormInput label="Horsepower (BHP)" type="number" value={formData.horsepower} onChange={v => setFormData({...formData, horsepower: parseInt(v)})} />
-            <FormInput label="Top Speed (KM/H)" type="number" value={formData.topSpeed} onChange={v => setFormData({...formData, topSpeed: parseInt(v)})} />
-            <FormInput label="0-100 KM/H (Sec)" type="number" step="0.1" value={formData.acceleration} onChange={v => setFormData({...formData, acceleration: parseFloat(v)})} />
-            <FormInput label="Transmission" value={formData.transmission} onChange={v => setFormData({...formData, transmission: v})} />
-            <FormInput label="Engine" value={formData.engine} onChange={v => setFormData({...formData, engine: v})} />
-            <FormInput label="VIN" value={formData.vin} onChange={v => setFormData({...formData, vin: v})} />
           </div>
 
           <div className="flex flex-col gap-4">
-            <FormInput label="Exterior Color" value={formData.exteriorColor} onChange={v => setFormData({...formData, exteriorColor: v})} />
-            <FormInput label="Interior Color" value={formData.interiorColor} onChange={v => setFormData({...formData, interiorColor: v})} />
+            <FormInput
+              label="Horsepower (BHP)"
+              type="number"
+              value={formData.horsepower}
+              onChange={(v) =>
+                setFormData({ ...formData, horsepower: parseInt(v) })
+              }
+            />
+            <FormInput
+              label="Top Speed (KM/H)"
+              type="number"
+              value={formData.topSpeed}
+              onChange={(v) =>
+                setFormData({ ...formData, topSpeed: parseInt(v) })
+              }
+            />
+            <FormInput
+              label="0-100 KM/H (Sec)"
+              type="number"
+              step="0.1"
+              value={formData.acceleration}
+              onChange={(v) =>
+                setFormData({ ...formData, acceleration: parseFloat(v) })
+              }
+            />
+            <FormInput
+              label="Transmission"
+              value={formData.transmission}
+              onChange={(v) => setFormData({ ...formData, transmission: v })}
+            />
+            <FormInput
+              label="Engine"
+              value={formData.engine}
+              onChange={(v) => setFormData({ ...formData, engine: v })}
+            />
+            <FormInput
+              label="VIN"
+              value={formData.vin}
+              onChange={(v) => setFormData({ ...formData, vin: v })}
+            />
+          </div>
+
+          <div className="flex flex-col gap-4">
+            <FormInput
+              label="Exterior Color"
+              value={formData.exteriorColor}
+              onChange={(v) => setFormData({ ...formData, exteriorColor: v })}
+            />
+            <FormInput
+              label="Interior Color"
+              value={formData.interiorColor}
+              onChange={(v) => setFormData({ ...formData, interiorColor: v })}
+            />
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Description</label>
-              <textarea 
+              <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+                Description
+              </label>
+              <textarea
                 className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none h-32 resize-none"
                 value={formData.description}
-                onChange={e => setFormData({...formData, description: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Detailed vehicle description..."
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-muted">Key Features (Comma separated)</label>
-              <textarea 
+              <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+                Key Features (Comma separated)
+              </label>
+              <textarea
                 className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none h-24 resize-none"
-                value={formData.features?.join(', ')}
-                onChange={e => setFormData({...formData, features: e.target.value.split(',').map(s => s.trim())})}
+                value={formData.features?.join(", ")}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    features: e.target.value.split(",").map((s) => s.trim()),
+                  })
+                }
                 placeholder="Carbon Fiber, Ceramic Brakes, etc."
               />
             </div>
           </div>
 
           <div className="md:col-span-3 flex gap-4 mt-4">
-            <button type="submit" className="flex-1 py-4 bg-accent text-bg font-bold uppercase tracking-widest rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all">
-              {vehicle ? 'Update Vehicle' : 'Add to Inventory'}
+            <button
+              type="submit"
+              className="flex-1 py-4 bg-accent text-bg font-bold uppercase tracking-widest rounded-sm hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              {vehicle ? "Update Vehicle" : "Add to Inventory"}
             </button>
-            <button type="button" onClick={onClose} className="px-8 py-4 border border-line text-muted font-bold uppercase tracking-widest rounded-sm hover:bg-white/5 transition-all">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-8 py-4 border border-line text-muted font-bold uppercase tracking-widest rounded-sm hover:bg-white/5 transition-all"
+            >
               Cancel
             </button>
           </div>
@@ -667,16 +1077,25 @@ const VehicleFormModal = ({ vehicle, onClose }: { vehicle: Vehicle | null, onClo
   );
 };
 
-const FormInput = ({ label, value, onChange, type = "text", required = false, step }: any) => (
+const FormInput = ({
+  label,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  step,
+}: any) => (
   <div className="flex flex-col gap-1">
-    <label className="text-[10px] uppercase tracking-widest font-bold text-muted">{label}</label>
-    <input 
+    <label className="text-[10px] uppercase tracking-widest font-bold text-muted">
+      {label}
+    </label>
+    <input
       type={type}
       step={step}
       required={required}
       className="bg-white/5 border border-line p-3 rounded-sm text-sm focus:border-accent outline-none"
       value={value}
-      onChange={e => onChange(e.target.value)}
+      onChange={(e) => onChange(e.target.value)}
     />
   </div>
 );
