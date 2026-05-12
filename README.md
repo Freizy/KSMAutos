@@ -1,5 +1,3 @@
-
-
 # KSM Autos
 
 A premium automotive marketplace platform built for enterprise-grade showroom experiences, live at:
@@ -36,13 +34,17 @@ KSM Autos is designed for tech-led automotive retailers, brokers, and marketplac
 - lead capture and inquiry management
 - real-time inventory control
 
+## Inquiry-Led Sales Model
+
+This product is intentionally built around an inquiry-first workflow. Instead of a cart or checkout, KSM Autos focuses on capturing high-intent leads, qualifying requests, and routing inquiries to sales teams for a premium customer engagement experience.
+
 ## Core Features
 
 - Vehicle browsing with premium detail presentation
 - Wishlist and saved favorites for signed-in users
 - Comparative analysis of up to 3 vehicles
-- Inquiry request flow for lead generation
-- Admin dashboard for inventory, users, inquiries, and site state
+- Inquiry request flow for lead generation and sales follow-up
+- Admin dashboard for inventory, user profiles, inquiries, and site state
 - Maintenance mode for controlled launch or emergency lockdown
 - Live production deployment at `ksm.autos`
 
@@ -150,16 +152,16 @@ KSM Autos is positioned to deliver:
 - faster high-end vehicle discovery
 - improved lead capture and sales workflows
 - a branded digital showroom experience
-- a scalable base for ecommerce and marketplace expansion
+- a scalable base for premium inquiry sales operations
 
 ## Roadmap for Acquisition-Ready Growth
 
 To make this app even more attractive for acquisition, prioritize:
 
-- quote and checkout workflow
+- inquiry follow-up automation and lead routing
 - customer lead email notification system
 - analytics dashboard and conversion tracking
-- payment or reservation flow
+- CRM / sales workflow integration
 - release automation and monitoring
 
 ---
