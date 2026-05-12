@@ -146,7 +146,7 @@ const Footer: React.FC<FooterProps> = ({ onOpenInfo }) => {
                       <div className="text-accent font-bold mb-1">
                         Command Sync
                       </div>
-                      <p className="opacity-70">+1 (800) KSM-ELITE</p>
+                      <p className="opacity-70">+233 (240 352196) KSM-ELITE</p>
                     </div>
                   </div>
                   <h4 className="text-accent font-bold underline">
