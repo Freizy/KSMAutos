@@ -37,7 +37,7 @@ const Footer: React.FC<FooterProps> = ({ onOpenInfo }) => {
                   <p>
                     All vehicle listings are subject to verification. Inquiries
                     do not constitute a binding purchase agreement until
-                    finalized by our elite concierge team.
+                    finalized by our elite concierge team respectfully.
                   </p>
                   <h4 className="text-accent font-bold">2. Data Integrity</h4>
                   <p>
@@ -140,13 +140,13 @@ const Footer: React.FC<FooterProps> = ({ onOpenInfo }) => {
                       <div className="text-accent font-bold mb-1">
                         Direct Uplink
                       </div>
-                      <p className="opacity-70">support@ksm-autos.systems</p>
+                      <p className="opacity-70">ksmautos.freizy@gmail.com</p>
                     </div>
                     <div className="glass p-4">
                       <div className="text-accent font-bold mb-1">
                         Command Sync
                       </div>
-                      <p className="opacity-70">+1 (800) KSM-ELITE</p>
+                      <p className="opacity-70">+233 (240 352196) KSM</p>
                     </div>
                   </div>
                   <h4 className="text-accent font-bold underline">
