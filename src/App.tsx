@@ -782,20 +782,32 @@ export default function App() {
                 onSubmit={async (e) => {
                   e.preventDefault();
                   const formData = new FormData(e.currentTarget);
+                  const inquiryData = {
+                    vehicleId: selectedVehicle.id,
+                    vehicleName: `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`,
+                    userName: formData.get('name') as string,
+                    userEmail: formData.get('email') as string,
+                    message: formData.get('message') as string,
+                    status: 'new',
+                    createdAt: new Date().toISOString()
+                  };
+  
                   try {
-                    await addDoc(collection(db, "inquiries"), {
-                      vehicleId: selectedVehicle.id,
-                      vehicleName: `${selectedVehicle.year} ${selectedVehicle.make} ${selectedVehicle.model}`,
-                      userName: formData.get("name"),
-                      userEmail: formData.get("email"),
-                      message: formData.get("message"),
-                      status: "pending",
-                      createdAt: new Date().toISOString(),
-                    });
-                    alert(
-                      "Inquiry sent successfully. Our team will contact you shortly.",
-                    );
-                    setShowInquiryModal(false);
+                    // Save to Firestore
+                    await addDoc(collection(db, 'inquiries'), inquiryData);
+                    
+                    // Notify via Email
+                    fetch('/api/notify-inquiry', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        ...inquiryData,
+                        contactEmail: settings?.contactEmail
+                      })
+                    }).catch(err => console.error("Notification failed:", err));
+  
+                    alert('Inquiry sent successfully. Our team will contact you shortly.');
+                      setShowInquiryModal(false);
                   } catch (err) {
                     handleFirestoreError(
                       err,

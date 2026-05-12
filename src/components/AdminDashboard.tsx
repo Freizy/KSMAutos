@@ -37,7 +37,7 @@ import {
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase';
 import { Vehicle, Inquiry, UserProfile, SiteSettings } from '../types';
-
+import { cn } from '../lib/utils';
 interface AdminDashboardProps {
   user: any;
 }
@@ -132,7 +132,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const stats = {
     totalValue: inventory.reduce((acc, v) => acc + (v.price || 0), 0),
     availableCount: inventory.filter(v => v.status === 'available').length,
-    pendingInquiries: inquiries.filter(i => i.status === 'pending').length,
+    newInquiries: inquiries.filter(i => i.status === 'new').length,
     soldCount: inventory.filter(v => v.status === 'sold').length
   };
 
@@ -159,7 +159,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={<DollarSign />} label="Inventory Value" value={`$${(stats.totalValue / 1000000).toFixed(1)}M`} />
         <StatCard icon={<Car />} label="Available Units" value={stats.availableCount} />
-        <StatCard icon={<MessageSquare />} label="Pending Inquiries" value={stats.pendingInquiries} />
+        <StatCard icon={<MessageSquare />} label="New Leads" value={stats.newInquiries} />
         <StatCard icon={<TrendingUp />} label="Sold Units" value={stats.soldCount} />
       </div>
 
@@ -410,53 +410,119 @@ const InventoryList = ({ inventory, onDelete, onEdit }: { inventory: Vehicle[], 
   </div>
 );
 
-const InquiriesList = ({ inquiries, onUpdateStatus }: { inquiries: Inquiry[], onUpdateStatus: (id: string, status: Inquiry['status']) => void }) => (
-  <div className="flex flex-col gap-2">
-    {inquiries.map(inquiry => (
-      <div key={inquiry.id} className="glass p-6 flex flex-col gap-4">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div className={`w-2 h-2 rounded-full ${inquiry.status === 'pending' ? 'bg-yellow-500' : inquiry.status === 'contacted' ? 'bg-blue-500' : 'bg-green-500'}`} />
-            <div>
-              <div className="text-[10px] text-muted uppercase tracking-widest font-bold">Inquiry for {inquiry.vehicleName}</div>
-              <div className="text-lg font-black tracking-tighter uppercase leading-none">{inquiry.userName}</div>
-              <div className="text-xs text-accent font-medium mt-1">{inquiry.userEmail}</div>
+const InquiriesList = ({ inquiries, onUpdateStatus }: { inquiries: Inquiry[], onUpdateStatus: (id: string, status: Inquiry['status']) => void }) => {
+  const [filter, setFilter] = useState<Inquiry['status'] | 'all'>('all');
+
+  const filteredInquiries = filter === 'all' 
+    ? inquiries 
+    : inquiries.filter(i => i.status === filter);
+
+  const getStatusColor = (status: Inquiry['status']) => {
+    switch (status) {
+      case 'new': return 'bg-yellow-500';
+      case 'contacted': return 'bg-blue-500';
+      case 'qualified': return 'bg-purple-500';
+      case 'closed': return 'bg-green-500';
+      default: return 'bg-muted';
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex gap-2 p-1 bg-white/5 rounded-sm self-start border border-line">
+        {(['all', 'new', 'contacted', 'qualified', 'closed'] as const).map(s => (
+          <button 
+            key={s}
+            onClick={() => setFilter(s)}
+            className={cn(
+              "px-4 py-1.5 text-[8px] uppercase tracking-widest font-black rounded-sm transition-all",
+              filter === s ? "bg-accent text-bg" : "text-muted hover:text-ink"
+            )}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {filteredInquiries.map(inquiry => (
+          <div key={inquiry.id} className="glass p-6 flex flex-col gap-4 border-l-2" style={{ borderLeftColor: inquiry.status === 'new' ? 'var(--color-accent)' : 'transparent' }}>
+            <div className="flex justify-between items-start">
+              <div className="flex items-center gap-4">
+                <div className={cn("w-2 h-2 rounded-full", getStatusColor(inquiry.status))} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted uppercase tracking-widest font-bold">Inquiry for</span>
+                    <span className="text-[10px] text-accent uppercase tracking-widest font-black">{inquiry.vehicleName}</span>
+                  </div>
+                  <div className="text-xl font-black tracking-tighter uppercase leading-none mt-1">{inquiry.userName}</div>
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-1.5 text-[10px] text-muted font-mono">
+                      <Clock className="w-3 h-3" />
+                      {new Date(inquiry.createdAt).toLocaleDateString()} at {new Date(inquiry.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-accent font-medium">
+                      <AlertCircle className="w-3 h-3" />
+                      {inquiry.userEmail}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="px-3 py-1 bg-white/5 rounded-full border border-line">
+                <span className={cn("text-[8px] uppercase tracking-widest font-black", inquiry.status === 'new' ? "text-accent" : "text-muted")}>
+                  {inquiry.status}
+                </span>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <p className="text-sm text-muted bg-white/5 p-4 rounded-sm italic border-l-2 border-accent/20">
+                "{inquiry.message || 'No message provided.'}"
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-line/50">
+              <ActionButton 
+                active={inquiry.status === 'contacted'} 
+                onClick={() => onUpdateStatus(inquiry.id, 'contacted')}
+                label="Contacted"
+              />
+              <ActionButton 
+                active={inquiry.status === 'qualified'} 
+                onClick={() => onUpdateStatus(inquiry.id, 'qualified')}
+                label="Qualified"
+              />
+              <ActionButton 
+                active={inquiry.status === 'closed'} 
+                onClick={() => onUpdateStatus(inquiry.id, 'closed')}
+                label="Close"
+              />
             </div>
           </div>
-          <div className="text-right">
-            <div className="text-[10px] text-muted uppercase tracking-widest font-bold">Date</div>
-            <div className="text-xs font-mono">{new Date(inquiry.createdAt).toLocaleDateString()}</div>
+        ))}
+        {filteredInquiries.length === 0 && (
+          <div className="flex flex-col items-center justify-center h-64 text-muted gap-2">
+            <MessageSquare className="w-12 h-12 opacity-20" />
+            <p className="text-[10px] uppercase tracking-widest font-bold">No {filter !== 'all' ? filter : ''} inquiries found</p>
           </div>
-        </div>
-        
-        <p className="text-sm text-muted bg-white/5 p-4 rounded-sm italic border-l-2 border-accent">
-          "{inquiry.message}"
-        </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
-        <div className="flex justify-end gap-2">
-          <button 
-            onClick={() => onUpdateStatus(inquiry.id, 'contacted')}
-            className={`px-4 py-2 text-[8px] uppercase tracking-widest font-bold rounded-sm border transition-all ${inquiry.status === 'contacted' ? 'bg-blue-500/20 border-blue-500 text-blue-500' : 'border-line text-muted hover:text-ink'}`}
-          >
-            Mark Contacted
-          </button>
-          <button 
-            onClick={() => onUpdateStatus(inquiry.id, 'closed')}
-            className={`px-4 py-2 text-[8px] uppercase tracking-widest font-bold rounded-sm border transition-all ${inquiry.status === 'closed' ? 'bg-green-500/20 border-green-500 text-green-500' : 'border-line text-muted hover:text-ink'}`}
-          >
-            Close Inquiry
-          </button>
-        </div>
-      </div>
-    ))}
-    {inquiries.length === 0 && (
-      <div className="flex flex-col items-center justify-center h-64 text-muted gap-2">
-        <MessageSquare className="w-12 h-12 opacity-20" />
-        <p className="text-[10px] uppercase tracking-widest font-bold">No inquiries yet</p>
-      </div>
+const ActionButton = ({ active, onClick, label }: { active: boolean, onClick: () => void, label: string }) => (
+  <button 
+    onClick={onClick}
+    className={cn(
+      "px-4 py-2 text-[8px] uppercase tracking-widest font-bold rounded-sm border transition-all",
+      active ? "bg-accent/10 border-accent text-accent" : "border-line text-muted hover:text-ink hover:border-muted"
     )}
-  </div>
+  >
+    {label}
+  </button>
 );
+
 
 const VehicleFormModal = ({ vehicle, onClose }: { vehicle: Vehicle | null, onClose: () => void }) => {
   const [formData, setFormData] = useState<Partial<Vehicle>>(vehicle || {

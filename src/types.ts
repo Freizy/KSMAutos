@@ -34,7 +34,7 @@ export interface Inquiry {
   userName: string;
   userEmail: string;
   message: string;
-  status: 'pending' | 'contacted' | 'closed';
+  status: 'new' | 'contacted' | 'qualified' | 'closed';
   createdAt: string;
 }
 
