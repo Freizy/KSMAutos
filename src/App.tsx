@@ -49,6 +49,7 @@ import Profile from "./components/Profile";
 import { AdminDashboard } from "./components/AdminDashboard";
 import Hero from "./components/Hero";
 import { VehicleCompare } from "./components/VehicleCompare";
+import Footer from "./components/Footer";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -61,6 +62,12 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  // inside function App() {
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [infoModalContent, setInfoModalContent] = useState<{
+    title: string;
+    content: React.ReactNode;
+  } | null>(null);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -112,6 +119,11 @@ export default function App() {
     setSelectedVehicle(vehicle);
     setActiveImageIndex(0);
     setShowDetailsModal(true);
+  };
+
+  const handleOpenInfoModal = (title: string, content: React.ReactNode) => {
+    setInfoModalContent({ title, content });
+    setShowInfoModal(true);
   };
 
   // Auth Listener
@@ -1025,42 +1037,45 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Footer */}
-      <footer className="border-t border-line py-12 mt-24">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <div className="flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-accent" />
-              <span className="font-bold tracking-tighter uppercase">
-                KSM Autos
-              </span>
-            </div>
-            <p className="text-xs text-muted">
-              High-Performance Vehicle Management System
-            </p>
-          </div>
-          <div className="flex gap-8 text-[10px] uppercase tracking-widest font-medium text-muted">
-            <a href="#" className="hover:text-accent transition-colors">
-              Terms
-            </a>
-            <a href="#" className="hover:text-accent transition-colors">
-              Privacy
-            </a>
-            <a href="#" className="hover:text-accent transition-colors">
-              API
-            </a>
-            <a href="#" className="hover:text-accent transition-colors">
-              Support
-            </a>
-          </div>
-          <div className="font-mono text-[10px] opacity-30">
-            © 2026 KSM AUTOS
-          </div>
-          <div className="font-mono text-[10px] opacity-30">
-            Powered by Freizy ❣
-          </div>
+      {/* Info Modal Overlay */}
+<AnimatePresence>
+  {showInfoModal && infoModalContent && (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => setShowInfoModal(false)}
+        className="absolute inset-0 bg-bg/95 backdrop-blur-md"
+      />
+      {/* Content Container */}
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: 20 }}
+        className="relative w-full max-w-2xl glass p-8 flex flex-col gap-6 max-h-[80vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-start">
+          <h2 className="text-3xl font-black tracking-tighter uppercase leading-none">
+            {infoModalContent.title}
+          </h2>
+          <button 
+            onClick={() => setShowInfoModal(false)} 
+            className="text-muted hover:text-ink text-2xl"
+          >
+            ×
+          </button>
         </div>
-      </footer>
+        <div className="prose prose-invert max-w-none">
+          {infoModalContent.content}
+        </div>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
+
+      <Footer onOpenInfo={handleOpenInfoModal} />
     </div>
   );
 }
